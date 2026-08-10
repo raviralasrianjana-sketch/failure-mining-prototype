@@ -23,11 +23,11 @@ tells it to answer only from that context and say so when something
 isn't in it, instead of inventing numbers or component names.
 
 LLM PROVIDER
-Uses the Google Gemini API. Config is read from (in order): OS
-environment variables, then st.secrets (so it also works on Streamlit
-Cloud). Needed values:
-  GEMINI_API_KEY   - your Gemini API key (from https://aistudio.google.com/apikey)
-  GEMINI_MODEL     - optional, defaults to "gemini-1.5-flash"
+Uses the Groq API (fast inference, generous no-credit-card free tier).
+Config is read from (in order): OS environment variables, then
+st.secrets (so it also works on Streamlit Cloud). Needed values:
+  GROQ_API_KEY   - your Groq API key (from https://console.groq.com/keys)
+  GROQ_MODEL     - optional, defaults to "llama-3.3-70b-versatile"
 No config -> the assistant shows a friendly setup message instead of
 crashing; the rest of the app (upload, clustering, dashboard, history)
 is unaffected.
@@ -37,7 +37,7 @@ import os
 
 import streamlit as st
 
-_DEFAULT_MODEL = "gemini-1.5-flash"
+_DEFAULT_MODEL = "llama-3.3-70b-versatile"
 
 SYSTEM_PROMPT_TEMPLATE = """You are the "Failure Mining AI Assistant" -- an AI analyst built \
 specifically to explain the results of THIS field-returns failure mode analysis. You are not a \
@@ -125,15 +125,15 @@ def _get_setting(name, default=None):
     return val if val else default
 
 
-def _gemini_config():
+def _groq_config():
     return {
-        "api_key": _get_setting("GEMINI_API_KEY"),
-        "model": _get_setting("GEMINI_MODEL", _DEFAULT_MODEL),
+        "api_key": _get_setting("GROQ_API_KEY"),
+        "model": _get_setting("GROQ_MODEL", _DEFAULT_MODEL),
     }
 
 
 def is_configured() -> bool:
-    cfg = _gemini_config()
+    cfg = _groq_config()
     return bool(cfg["api_key"] and cfg["model"])
 
 
@@ -148,46 +148,33 @@ def ask_assistant(context: str, chat_history: list, question: str) -> str:
     package, API error) -- callers should catch this and show it, not
     crash the app.
     """
-    cfg = _gemini_config()
+    cfg = _groq_config()
     if not is_configured():
         raise RuntimeError(
-            "The AI Assistant isn't configured yet -- set GEMINI_API_KEY "
+            "The AI Assistant isn't configured yet -- set GROQ_API_KEY "
             "(as an environment variable or in .streamlit/secrets.toml). "
             "See README.md -> 'Setting up the AI Assistant'."
         )
 
     try:
-        import google.generativeai as genai
+        from groq import Groq
     except ImportError:
         raise RuntimeError(
-            "The 'google-generativeai' package isn't installed. Run `pip install -r requirements.txt`."
+            "The 'groq' package isn't installed. Run `pip install -r requirements.txt`."
         )
+
+    messages = [{"role": "system", "content": SYSTEM_PROMPT_TEMPLATE.format(context=context)}]
+    messages.extend(chat_history)
+    messages.append({"role": "user", "content": question})
 
     try:
-        genai.configure(api_key=cfg["api_key"])
-        model = genai.GenerativeModel(
-            model_name=cfg["model"],
-            system_instruction=SYSTEM_PROMPT_TEMPLATE.format(context=context),
+        client = Groq(api_key=cfg["api_key"])
+        response = client.chat.completions.create(
+            model=cfg["model"],
+            messages=messages,
+            temperature=0.2,
+            max_tokens=800,
         )
-
-        # Gemini uses "model" instead of "assistant" for the AI role, and
-        # expects each turn's text wrapped in a "parts" list.
-        gemini_history = [
-            {
-                "role": ("model" if turn["role"] == "assistant" else "user"),
-                "parts": [turn["content"]],
-            }
-            for turn in chat_history
-        ]
-
-        chat = model.start_chat(history=gemini_history)
-        response = chat.send_message(
-            question,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.2,
-                max_output_tokens=500,
-            ),
-        )
-        return response.text.strip()
+        return response.choices[0].message.content.strip()
     except Exception as e:
-        raise RuntimeError(f"The AI Assistant couldn't reach Gemini right now. ({e})")
+        raise RuntimeError(f"The AI Assistant couldn't reach Groq right now. ({e})")

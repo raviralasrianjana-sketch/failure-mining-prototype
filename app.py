@@ -491,7 +491,7 @@ def render_data_report():
 
 
 # ---------------------------------------------------------------------------
-# SECTION 7 - Failure Mining AI Assistant (Gemini-powered chat)
+# SECTION 7 - Failure Mining AI Assistant (Groq-powered chat)
 # ---------------------------------------------------------------------------
 def render_ai_assistant():
     filtered, trend_f, selected_models = get_filtered_data()
@@ -502,12 +502,12 @@ def render_ai_assistant():
     st.caption(
         "Ask questions about the current analysis results (themes, trends, "
         "affected models). Answers are grounded only in this analysis -- "
-        "powered by Google Gemini."
+        "powered by Groq."
     )
 
     if not chatbot.is_configured():
         st.warning(
-            "The AI Assistant isn't configured yet -- set `GEMINI_API_KEY` "
+            "The AI Assistant isn't configured yet -- set `GROQ_API_KEY` "
             "(as an environment variable or in `.streamlit/secrets.toml`). "
             "See README.md -> 'Setting up the AI Assistant'."
         )
