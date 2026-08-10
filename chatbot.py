@@ -23,15 +23,11 @@ tells it to answer only from that context and say so when something
 isn't in it, instead of inventing numbers or component names.
 
 LLM PROVIDER
-Uses Azure OpenAI Service (matches the brief's own suggested tool list:
-"Azure OpenAI (theme labeling)"). Config is read from (in order): OS
+Uses the Google Gemini API. Config is read from (in order): OS
 environment variables, then st.secrets (so it also works on Streamlit
 Cloud). Needed values:
-  AZURE_OPENAI_API_KEY       - your Azure OpenAI resource key
-  AZURE_OPENAI_ENDPOINT      - e.g. https://your-resource.openai.azure.com/
-  AZURE_OPENAI_DEPLOYMENT    - the deployment name you created in Azure
-                                (e.g. "gpt-4o-mini"), NOT the base model name
-  AZURE_OPENAI_API_VERSION   - optional, defaults to "2024-10-21"
+  GEMINI_API_KEY   - your Gemini API key (from https://aistudio.google.com/apikey)
+  GEMINI_MODEL     - optional, defaults to "gemini-1.5-flash"
 No config -> the assistant shows a friendly setup message instead of
 crashing; the rest of the app (upload, clustering, dashboard, history)
 is unaffected.
@@ -41,7 +37,7 @@ import os
 
 import streamlit as st
 
-_DEFAULT_API_VERSION = "2024-10-21"
+_DEFAULT_MODEL = "gemini-1.5-flash"
 
 SYSTEM_PROMPT_TEMPLATE = """You are the "Failure Mining AI Assistant" -- an AI analyst built \
 specifically to explain the results of THIS field-returns failure mode analysis. You are not a \
@@ -129,18 +125,16 @@ def _get_setting(name, default=None):
     return val if val else default
 
 
-def _azure_config():
+def _gemini_config():
     return {
-        "api_key": _get_setting("AZURE_OPENAI_API_KEY"),
-        "endpoint": _get_setting("AZURE_OPENAI_ENDPOINT"),
-        "deployment": _get_setting("AZURE_OPENAI_DEPLOYMENT"),
-        "api_version": _get_setting("AZURE_OPENAI_API_VERSION", _DEFAULT_API_VERSION),
+        "api_key": _get_setting("GEMINI_API_KEY"),
+        "model": _get_setting("GEMINI_MODEL", _DEFAULT_MODEL),
     }
 
 
 def is_configured() -> bool:
-    cfg = _azure_config()
-    return bool(cfg["api_key"] and cfg["endpoint"] and cfg["deployment"])
+    cfg = _gemini_config()
+    return bool(cfg["api_key"] and cfg["model"])
 
 
 def ask_assistant(context: str, chat_history: list, question: str) -> str:
@@ -154,39 +148,46 @@ def ask_assistant(context: str, chat_history: list, question: str) -> str:
     package, API error) -- callers should catch this and show it, not
     crash the app.
     """
-    cfg = _azure_config()
+    cfg = _gemini_config()
     if not is_configured():
         raise RuntimeError(
-            "The AI Assistant isn't configured yet -- set AZURE_OPENAI_API_KEY, "
-            "AZURE_OPENAI_ENDPOINT, and AZURE_OPENAI_DEPLOYMENT (as environment "
-            "variables or in .streamlit/secrets.toml). See README.md -> "
-            "'Setting up the AI Assistant'."
+            "The AI Assistant isn't configured yet -- set GEMINI_API_KEY "
+            "(as an environment variable or in .streamlit/secrets.toml). "
+            "See README.md -> 'Setting up the AI Assistant'."
         )
 
     try:
-        from openai import AzureOpenAI
+        import google.generativeai as genai
     except ImportError:
         raise RuntimeError(
-            "The 'openai' package isn't installed. Run `pip install -r requirements.txt`."
+            "The 'google-generativeai' package isn't installed. Run `pip install -r requirements.txt`."
         )
-
-    client = AzureOpenAI(
-        api_key=cfg["api_key"],
-        azure_endpoint=cfg["endpoint"],
-        api_version=cfg["api_version"],
-    )
-
-    messages = [{"role": "system", "content": SYSTEM_PROMPT_TEMPLATE.format(context=context)}]
-    messages.extend(chat_history)
-    messages.append({"role": "user", "content": question})
 
     try:
-        response = client.chat.completions.create(
-            model=cfg["deployment"],  # Azure uses your deployment name here, not the base model name
-            messages=messages,
-            temperature=0.2,
-            max_tokens=500,
+        genai.configure(api_key=cfg["api_key"])
+        model = genai.GenerativeModel(
+            model_name=cfg["model"],
+            system_instruction=SYSTEM_PROMPT_TEMPLATE.format(context=context),
         )
-        return response.choices[0].message.content.strip()
+
+        # Gemini uses "model" instead of "assistant" for the AI role, and
+        # expects each turn's text wrapped in a "parts" list.
+        gemini_history = [
+            {
+                "role": ("model" if turn["role"] == "assistant" else "user"),
+                "parts": [turn["content"]],
+            }
+            for turn in chat_history
+        ]
+
+        chat = model.start_chat(history=gemini_history)
+        response = chat.send_message(
+            question,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.2,
+                max_output_tokens=500,
+            ),
+        )
+        return response.text.strip()
     except Exception as e:
-        raise RuntimeError(f"The AI Assistant couldn't reach Azure OpenAI right now. ({e})")
+        raise RuntimeError(f"The AI Assistant couldn't reach Gemini right now. ({e})")

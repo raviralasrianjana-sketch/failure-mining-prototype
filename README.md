@@ -15,11 +15,12 @@ This matches the brief: **Service Notes → Top Failure Modes.**
 failure_mining/
 ├── generate_data.py         # Creates synthetic (fake) service notes -> data/service_notes.csv
 ├── pipeline.py               # The data science: sanitize -> vectorize -> cluster -> label -> trends
-├── auth.py                   # Accounts (email/password + Google), profiles, history (SQLite)
+├── auth.py                   # Accounts (email/password), profiles, history (SQLite)
+├── chatbot.py                 # Failure Mining AI Assistant (Gemini-powered chat, grounded in the analysis)
 ├── app.py                     # Streamlit app: login -> upload -> icon hub -> sections -> history
 ├── requirements.txt           # Python packages needed
 ├── .streamlit/
-│   └── secrets.toml.example    # Template for Google Sign-In config (copy -> secrets.toml)
+│   └── secrets.toml.example    # Template for AI Assistant (Gemini) config (copy -> secrets.toml)
 ├── data/
 │   ├── service_notes.csv       # Generated synthetic dataset (450 notes)
 │   └── app.db                  # SQLite database: users + history (created automatically)
@@ -43,8 +44,8 @@ pip install -r requirements.txt
 # 2. (Already done, but you can regenerate anytime)
 python generate_data.py
 
-# 3. (Optional) set up Google Sign-In -- see section 4 below.
-#    Skip this if you only want email/password login for now.
+# 3. (Optional) set up the Gemini-powered AI Assistant -- see section 3 below.
+#    Skip this if you don't need the chatbot yet.
 
 # 4. Launch the app
 streamlit run app.py
@@ -57,38 +58,32 @@ First screen: **sign up or log in.**
 
 ## 3. Accounts, profiles & history (new)
 
-- **Starting the app now always begins with sign-in.** You either:
-  - Enter an email + password to **sign up** (creates a profile) or
-    **log in** (if you already have one), or
-  - Click **Continue with Google** (needs a one-time setup — see below).
+- **Starting the app now always begins with sign-in.** Enter an email +
+  password to **sign up** (creates a profile) or **log in** (if you
+  already have one).
 - A **profile** (name, email, sign-in method, created date) is stored the
-  first time you sign up or sign in with Google. It's saved locally in
-  `data/app.db` (SQLite — a single file, no server needed).
+  first time you sign up. It's saved locally in `data/app.db` (SQLite —
+  a single file, no server needed).
 - Every time you run an analysis, it's logged to **your profile's
-  History** (email + password hashed with bcrypt; Google accounts use no
-  password at all). Open History anytime from the sidebar (🕒 History
-  button) to see past runs and re-download their saved reports.
+  History** (password hashed with bcrypt). Open History anytime from the
+  sidebar (🕒 History button) to see past runs and re-download their
+  saved reports.
 - Passwords are never stored as plain text — they're hashed with
   **bcrypt** before touching the database.
 
-### Setting up Google Sign-In (optional)
+### Setting up the AI Assistant (optional)
 
-Google Sign-In uses Streamlit's built-in `st.login()` (OpenID Connect).
-Email/password login works with **zero** setup; only do this if you want
-the Google button to work too.
+The **Failure Mining AI Assistant** (🤖) is a chatbot, grounded only in
+your current analysis results, powered by the **Google Gemini API**. The
+rest of the app works with **zero** setup; only do this if you want the
+chatbot to answer.
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/) →
-   **APIs & Services → Credentials** → **Create Credentials → OAuth
-   client ID** → Application type: **Web application**.
-2. Add an **Authorized redirect URI**:
-   `http://localhost:8501/oauth2callback` (for local dev — use your
-   deployed URL + `/oauth2callback` in production).
-3. Copy the generated **Client ID** and **Client Secret**.
-4. Copy `.streamlit/secrets.toml.example` to `.streamlit/secrets.toml`
-   and fill in your Client ID/Secret and a random `cookie_secret` string.
-5. Restart the app. The Google button will now work. If it's not
-   configured, clicking it shows a friendly message instead of crashing
-   — email/password login is unaffected either way.
+1. Get a free API key at [Google AI Studio](https://aistudio.google.com/apikey).
+2. Copy `.streamlit/secrets.toml.example` to `.streamlit/secrets.toml`
+   and fill in `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`).
+3. Restart the app. If it's not configured, opening the AI Assistant
+   section shows a friendly setup message instead of crashing — the
+   rest of the app is unaffected either way.
 
 `.streamlit/secrets.toml` is already in `.gitignore` — never commit real
 credentials to GitHub.
@@ -98,7 +93,7 @@ credentials to GitHub.
 ## 4. Navigating the app (new: icon hub)
 
 After you log in and upload + analyze a file, you land on a **hub page**
-with six sections, each shown as an animated icon + topic name:
+with seven sections, each shown as an animated icon + topic name:
 
 | Icon | Section |
 |---|---|
@@ -108,6 +103,7 @@ with six sections, each shown as an animated icon + topic name:
 | 🏭 | Failure Counts by Product Model |
 | 💡 | Actionable Insights Summary |
 | 📄 | Underlying Data & Report (download) |
+| 🤖 | Failure Mining AI Assistant (chat) |
 
 Click any icon/name to open that section full-page; use **⬅️ Back to
 Hub** to return. Sidebar filters (product model, date range) apply

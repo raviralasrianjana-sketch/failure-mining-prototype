@@ -6,6 +6,7 @@ import plotly.express as px
 import streamlit as st
 
 import auth
+import chatbot
 from pipeline import run_pipeline, build_trend_table, build_insights, build_word_report
 
 st.set_page_config(
@@ -41,6 +42,7 @@ SECTIONS = [
     {"key": "model_counts", "icon": "🏭", "label": "Failure Counts by Product Model"},
     {"key": "insights", "icon": "💡", "label": "Actionable Insights Summary"},
     {"key": "data_report", "icon": "📄", "label": "Underlying Data & Report (Download)"},
+    {"key": "ai_assistant", "icon": "🤖", "label": "Failure Mining AI Assistant (Chat)"},
 ]
 SECTION_KEYS = {s["key"] for s in SECTIONS}
 
@@ -80,27 +82,11 @@ if "analysis_done" not in st.session_state:
     st.session_state.analysis_done = False
 
 
-# ---------------------------------------------------------------------------
-# GOOGLE SIGN-IN: if Streamlit's built-in auth is configured and the user
-# just came back from a successful Google login, st.user is populated.
-# We mirror that into our own users table so Google accounts get a real
-# profile + history too, exactly like email/password accounts.
-# ---------------------------------------------------------------------------
-if hasattr(st, "user") and getattr(st.user, "is_logged_in", False):
-    profile = auth.get_or_create_google_profile(
-        email=st.user.email,
-        name=getattr(st.user, "name", "") or "",
-    )
-    st.session_state.user = profile
-    if st.session_state.page == "auth":
-        st.session_state.page = "upload"
-
-
 def do_logout():
     user = st.session_state.get("user")
     if user and user.get("provider") == "google" and hasattr(st, "logout"):
         st.logout()
-    for key in ("user", "df", "cluster_labels", "k_used", "trend", "analysis_done", "source_name", "detection_info"):
+    for key in ("user", "df", "cluster_labels", "k_used", "trend", "analysis_done", "source_name", "detection_info", "chat_history"):
         st.session_state.pop(key, None)
     st.session_state.page = "auth"
     st.rerun()
@@ -113,8 +99,8 @@ def render_auth_page():
     st.title("🔧 Field Returns Failure Mode Mining")
     st.caption("Sign in to continue -- a profile is created automatically the first time.")
 
-    tab_login, tab_signup, tab_google = st.tabs(
-        ["🔑 Log In", "🆕 Sign Up", "🔵 Continue with Google"]
+    tab_login, tab_signup = st.tabs(
+        ["🔑 Log In", "🆕 Sign Up"]
     )
 
     with tab_login:
@@ -147,24 +133,6 @@ def render_auth_page():
                 st.rerun()
             else:
                 st.error(msg)
-
-    with tab_google:
-        st.write("Sign in with your Google account -- no password needed.")
-        if not hasattr(st, "login"):
-            st.warning(
-                "Google Sign-In needs Streamlit 1.42 or newer (`pip install -U streamlit`) "
-                "plus a one-time OAuth setup. See README.md → 'Setting up Google Sign-In'."
-            )
-        else:
-            if st.button("🔵 Continue with Google", type="primary"):
-                try:
-                    st.login("google")
-                except Exception as e:
-                    st.error(
-                        "Google Sign-In isn't configured on this app yet. Add your OAuth "
-                        "client ID/secret to `.streamlit/secrets.toml` -- see README.md → "
-                        f"'Setting up Google Sign-In'.\n\n(Details: {e})"
-                    )
 
 
 # ---------------------------------------------------------------------------
@@ -523,6 +491,66 @@ def render_data_report():
 
 
 # ---------------------------------------------------------------------------
+# SECTION 7 - Failure Mining AI Assistant (Gemini-powered chat)
+# ---------------------------------------------------------------------------
+def render_ai_assistant():
+    filtered, trend_f, selected_models = get_filtered_data()
+    k_used = st.session_state.k_used
+
+    back_button()
+    st.title("🤖 Failure Mining AI Assistant")
+    st.caption(
+        "Ask questions about the current analysis results (themes, trends, "
+        "affected models). Answers are grounded only in this analysis -- "
+        "powered by Google Gemini."
+    )
+
+    if not chatbot.is_configured():
+        st.warning(
+            "The AI Assistant isn't configured yet -- set `GEMINI_API_KEY` "
+            "(as an environment variable or in `.streamlit/secrets.toml`). "
+            "See README.md -> 'Setting up the AI Assistant'."
+        )
+        return
+
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+
+    insights = build_insights(filtered, top_n=k_used)
+    context = chatbot.build_context(
+        filtered, insights, trend_f, k_used,
+        source_name=st.session_state.get("source_name", "uploaded file"),
+    )
+
+    for turn in st.session_state.chat_history:
+        with st.chat_message(turn["role"]):
+            st.markdown(turn["content"])
+
+    question = st.chat_input("Ask about the failure themes, trends, or affected models...")
+    if question:
+        st.session_state.chat_history.append({"role": "user", "content": question})
+        with st.chat_message("user"):
+            st.markdown(question)
+
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                try:
+                    answer = chatbot.ask_assistant(
+                        context, st.session_state.chat_history[:-1], question
+                    )
+                except RuntimeError as e:
+                    answer = f"⚠️ {e}"
+            st.markdown(answer)
+
+        st.session_state.chat_history.append({"role": "assistant", "content": answer})
+
+    if st.session_state.chat_history:
+        if st.button("🗑️ Clear chat"):
+            st.session_state.chat_history = []
+            st.rerun()
+
+
+# ---------------------------------------------------------------------------
 # HISTORY - past analyses for the logged-in profile
 # ---------------------------------------------------------------------------
 def render_history():
@@ -598,6 +626,8 @@ else:
         render_insights()
     elif page == "data_report":
         render_data_report()
+    elif page == "ai_assistant":
+        render_ai_assistant()
     else:
         render_hub()
 
