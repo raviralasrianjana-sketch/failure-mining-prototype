@@ -1,0 +1,451 @@
+note_id,product_model,serial_number,date,symptom_text,fix_text,tag,_true_theme_for_validation_only
+RET-00001,Model-C300,SN-C30-00001,2026-07-28,Customer reports burning smell and excessive heat near vents.,Replaced thermal paste on main processor.,,Overheating
+RET-00002,Model-C300,SN-C30-00002,2025-10-11,Customer Priya Nair reported: Thermal shutdown triggered repeatedly under light load.,Cleaned dust from heat sink and fan assembly.,,Overheating
+RET-00003,Model-A100,SN-A10-00003,2025-09-11,Customer reports battery does not hold charge overnight.,"Replaced battery cell, capacity restored.",battery_drain,Battery Drain
+RET-00004,Model-A100,SN-A10-00004,2025-08-17,"Flickering screen, gets worse when device is warm.",Replaced touch digitizer.,display_fault,Display Fault
+RET-00005,Model-B200,SN-B20-00005,2026-08-03,Customer reports burning smell and excessive heat near vents.,Replaced faulty cooling fan.,,Overheating
+RET-00006,Model-C300,SN-C30-00006,2025-11-08,Loud grinding noise coming from internal fan. Contact: +91 90000 11122.,Tightened loose internal bracket causing rattle.,,Unusual Noise
+RET-00007,Model-B200,SN-B20-00007,2025-08-14,Battery drains fully within 2 hours of light use.,"Replaced battery cell, capacity restored.",,Battery Drain
+RET-00008,Model-A100,SN-A10-00008,2026-06-19,Customer reports battery does not hold charge overnight.,Updated firmware to fix power management bug.,,Battery Drain
+RET-00009,Model-A100,SN-A10-00009,2026-02-09,Outer casing has visible dents and scratches.,Replaced latch mechanism.,,Physical Damage
+RET-00010,Model-C300,SN-C30-00010,2025-10-02,Unit overheats and shuts down after 20 minutes of operation.,Replaced thermal paste on main processor.,overheating,Overheating
+RET-00011,Model-C300,SN-C30-00011,2025-08-24,Battery percentage drops from 100 to 0 in minutes.,"Replaced battery cell, capacity restored.",battery_drain,Battery Drain
+RET-00012,Model-B200,SN-B20-00012,2026-03-25,Device freezes randomly during normal operation.,Reflashed firmware to latest stable version.,,Software Crash
+RET-00013,Model-C300,SN-C30-00013,2026-04-23,"Customer reports unit was dropped, casing damaged.",Replaced broken hinge assembly.,,Physical Damage
+RET-00014,Model-A100,SN-A10-00014,2026-05-30,Bluetooth pairing fails every time.,Reseated antenna connector.,connectivity_issue,Connectivity Issue
+RET-00015,Model-C300,SN-C30-00015,2025-10-15,Customer reports random restarts several times a day.,Factory reset resolved the crashing issue.,,Software Crash
+RET-00016,Model-C300,SN-C30-00016,2026-06-24,Loud grinding noise coming from internal fan.,Replaced noisy fan assembly.,unusual_noise,Unusual Noise
+RET-00017,Model-C300,SN-C30-00017,2025-10-08,Device freezes randomly during normal operation.,Factory reset resolved the crashing issue.,,Software Crash
+RET-00018,Model-C300,SN-C30-00018,2025-10-30,Unit repeatedly disconnects from WiFi network.,Reseated antenna connector.,,Connectivity Issue
+RET-00019,Model-C300,SN-C30-00019,2025-09-15,Customer reports intermittent loss of network signal.,Replaced WiFi/Bluetooth module.,connectivity_issue,Connectivity Issue
+RET-00020,Model-A100,SN-A10-00020,2025-11-26,Bluetooth pairing fails every time.,Reseated antenna connector.,,Connectivity Issue
+RET-00021,Model-B200,SN-B20-00021,2026-05-23,Battery percentage drops from 100 to 0 in minutes.,"Replaced battery cell, capacity restored.",,Battery Drain
+RET-00022,Model-C300,SN-C30-00022,2025-10-07,"No power, LED does not light up when plugged in. Contact: 9845012345.",Replaced fuse on main board.,no_power,No Power
+RET-00023,Model-A100,SN-A10-00023,2026-06-27,Thermal shutdown triggered repeatedly under light load.,Cleaned dust from heat sink and fan assembly.,,Overheating
+RET-00024,Model-A100,SN-A10-00024,2025-09-06,"Flickering screen, gets worse when device is warm.",Reseated display ribbon cable.,,Display Fault
+RET-00025,Model-B200,SN-B20-00025,2025-11-06,Device loses charge rapidly even in standby mode.,Replaced charging circuit board.,,Battery Drain
+RET-00026,Model-C300,SN-C30-00026,2025-12-28,"Customer reports unit was dropped, casing damaged.",Replaced outer housing.,physical_damage,Physical Damage
+RET-00027,Model-A100,SN-A10-00027,2025-10-12,Device loses charge rapidly even in standby mode. Reach out at rahul.sharma@example.com for follow-up.,"Replaced battery cell, capacity restored.",battery_drain,Battery Drain
+RET-00028,Model-A100,SN-A10-00028,2026-07-04,Outer casing has visible dents and scratches.,Replaced broken hinge assembly.,physical_damage,Physical Damage
+RET-00029,Model-A100,SN-A10-00029,2026-04-07,High pitched whining noise during operation.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00030,Model-B200,SN-B20-00030,2026-01-05,"Customer reports unit was dropped, casing damaged.",Replaced broken hinge assembly.,physical_damage,Physical Damage
+RET-00031,Model-C300,SN-C30-00031,2026-07-09,Thermal shutdown triggered repeatedly under light load.,Replaced faulty cooling fan.,overheating,Overheating
+RET-00032,Model-A100,SN-A10-00032,2025-11-08,Customer reports battery does not hold charge overnight.,"Replaced battery cell, capacity restored.",battery_drain,Battery Drain
+RET-00033,Model-A100,SN-A10-00033,2025-12-26,"Fan not spinning, unit overheating quickly. Reach out at rahul.sharma@example.com for follow-up.",Cleaned dust from heat sink and fan assembly.,,Overheating
+RET-00034,Model-A100,SN-A10-00034,2026-01-13,"Flickering screen, gets worse when device is warm.",Replaced display driver IC on board.,display_fault,Display Fault
+RET-00035,Model-A100,SN-A10-00035,2026-01-27,Screen shows vertical lines across display.,Replaced display driver IC on board.,,Display Fault
+RET-00036,Model-B200,SN-B20-00036,2026-01-05,Device cannot detect any nearby WiFi networks.,Replaced WiFi/Bluetooth module.,connectivity_issue,Connectivity Issue
+RET-00037,Model-A100,SN-A10-00037,2026-03-02,Unit does not power on at all.,Replaced power supply board.,,No Power
+RET-00038,Model-C300,SN-C30-00038,2026-07-11,"Cracked display panel, screen partially visible.",Replaced display panel assembly.,display_fault,Display Fault
+RET-00039,Model-A100,SN-A10-00039,2026-01-15,Battery drains fully within 2 hours of light use.,Replaced charging circuit board.,,Battery Drain
+RET-00040,Model-C300,SN-C30-00040,2026-01-07,"Fan not spinning, unit overheating quickly.",Replaced faulty cooling fan.,overheating,Overheating
+RET-00041,Model-C300,SN-C30-00041,2026-04-09,"Broken latch, cover does not close properly. Reach out at priya.n@mail.com for follow-up.",Replaced broken hinge assembly.,physical_damage,Physical Damage
+RET-00042,Model-A100,SN-A10-00042,2025-12-18,"Customer Karthik Reddy reported: Dead on arrival, no boot, no lights.",Replaced power supply board.,no_power,No Power
+RET-00043,Model-B200,SN-B20-00043,2026-07-23,Unit overheats and shuts down after 20 minutes of operation.,"Replaced temperature sensor, false trips resolved.",,Overheating
+RET-00044,Model-C300,SN-C30-00044,2025-09-02,"Dead on arrival, no boot, no lights.","Found loose power connector, reseated and resolved.",no_power,No Power
+RET-00045,Model-A100,SN-A10-00045,2026-06-11,Unit repeatedly disconnects from WiFi network.,Reseated antenna connector.,connectivity_issue,Connectivity Issue
+RET-00046,Model-C300,SN-C30-00046,2026-02-15,Device loses charge rapidly even in standby mode.,Replaced charging circuit board.,battery_drain,Battery Drain
+RET-00047,Model-B200,SN-B20-00047,2026-07-14,Unit repeatedly disconnects from WiFi network.,Reseated antenna connector.,connectivity_issue,Connectivity Issue
+RET-00048,Model-A100,SN-A10-00048,2026-06-04,"Broken latch, cover does not close properly.",Replaced outer housing.,,Physical Damage
+RET-00049,Model-B200,SN-B20-00049,2026-06-13,Unit does not power on at all.,"Replaced battery, unit powers on normally now.",,No Power
+RET-00050,Model-C300,SN-C30-00050,2026-01-01,Display is completely blank but unit powers on.,Replaced display panel assembly.,,Display Fault
+RET-00051,Model-A100,SN-A10-00051,2026-04-24,Outer casing has visible dents and scratches. Reach out at priya.n@mail.com for follow-up.,Replaced latch mechanism.,,Physical Damage
+RET-00052,Model-C300,SN-C30-00052,2026-04-10,Display is completely blank but unit powers on.,Reseated display ribbon cable.,display_fault,Display Fault
+RET-00053,Model-C300,SN-C30-00053,2026-01-11,Outer casing has visible dents and scratches.,Replaced broken hinge assembly.,,Physical Damage
+RET-00054,Model-B200,SN-B20-00054,2025-12-12,"Device completely dead, no response to power button.","Replaced battery, unit powers on normally now.",no_power,No Power
+RET-00055,Model-B200,SN-B20-00055,2026-04-17,Battery drains fully within 2 hours of light use.,Replaced charging circuit board.,battery_drain,Battery Drain
+RET-00056,Model-A100,SN-A10-00056,2026-02-11,Device cannot detect any nearby WiFi networks.,Reseated antenna connector.,,Connectivity Issue
+RET-00057,Model-A100,SN-A10-00057,2026-03-29,Unit overheats and shuts down after 20 minutes of operation. Reach out at priya.n@mail.com for follow-up.,Replaced faulty cooling fan.,overheating,Overheating
+RET-00058,Model-B200,SN-B20-00058,2025-10-03,Device freezes randomly during normal operation.,Factory reset resolved the crashing issue.,software_crash,Software Crash
+RET-00059,Model-A100,SN-A10-00059,2026-08-09,App crashes repeatedly on startup.,Factory reset resolved the crashing issue.,,Software Crash
+RET-00060,Model-B200,SN-B20-00060,2025-09-04,"Housing cracked near hinge, likely from a drop.",Replaced latch mechanism.,,Physical Damage
+RET-00061,Model-C300,SN-C30-00061,2026-02-23,Customer reports random restarts several times a day.,Rolled back faulty software update.,software_crash,Software Crash
+RET-00062,Model-B200,SN-B20-00062,2025-08-28,App crashes repeatedly on startup.,Rolled back faulty software update.,software_crash,Software Crash
+RET-00063,Model-A100,SN-A10-00063,2026-03-16,Bluetooth pairing fails every time.,Updated network driver firmware.,,Connectivity Issue
+RET-00064,Model-B200,SN-B20-00064,2025-12-26,High pitched whining noise during operation.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00065,Model-C300,SN-C30-00065,2025-09-06,Screen shows vertical lines across display.,Replaced touch digitizer.,,Display Fault
+RET-00066,Model-B200,SN-B20-00066,2026-06-16,Customer Priya Nair reported: Unit overheats and shuts down after 20 minutes of operation.,Replaced thermal paste on main processor.,,Overheating
+RET-00067,Model-C300,SN-C30-00067,2025-12-19,Thermal shutdown triggered repeatedly under light load.,Replaced thermal paste on main processor.,overheating,Overheating
+RET-00068,Model-B200,SN-B20-00068,2026-05-26,Battery drains fully within 2 hours of light use.,"Replaced battery cell, capacity restored.",battery_drain,Battery Drain
+RET-00069,Model-C300,SN-C30-00069,2026-07-15,Clicking sound heard during startup.,Replaced noisy fan assembly.,,Unusual Noise
+RET-00070,Model-C300,SN-C30-00070,2025-12-26,"Customer reports unit was dropped, casing damaged.",Replaced latch mechanism.,physical_damage,Physical Damage
+RET-00071,Model-B200,SN-B20-00071,2026-03-30,Clicking sound heard during startup.,Replaced coil on power board causing whine.,,Unusual Noise
+RET-00072,Model-B200,SN-B20-00072,2026-03-22,Customer reports battery does not hold charge overnight.,"Replaced battery cell, capacity restored.",battery_drain,Battery Drain
+RET-00073,Model-B200,SN-B20-00073,2025-11-06,"Housing cracked near hinge, likely from a drop.",Replaced outer housing.,physical_damage,Physical Damage
+RET-00074,Model-A100,SN-A10-00074,2026-07-08,Customer reports battery does not hold charge overnight.,Updated firmware to fix power management bug.,battery_drain,Battery Drain
+RET-00075,Model-A100,SN-A10-00075,2026-01-06,Customer reports battery does not hold charge overnight.,Replaced charging circuit board.,battery_drain,Battery Drain
+RET-00076,Model-C300,SN-C30-00076,2025-12-08,Device freezes randomly during normal operation.,Factory reset resolved the crashing issue.,software_crash,Software Crash
+RET-00077,Model-B200,SN-B20-00077,2025-12-03,Device loses charge rapidly even in standby mode.,Updated firmware to fix power management bug.,battery_drain,Battery Drain
+RET-00078,Model-B200,SN-B20-00078,2026-05-17,Customer reports random restarts several times a day.,Reflashed firmware to latest stable version.,,Software Crash
+RET-00079,Model-B200,SN-B20-00079,2026-06-28,Customer reports unit won't turn on even after charging overnight.,"Replaced battery, unit powers on normally now.",no_power,No Power
+RET-00080,Model-B200,SN-B20-00080,2026-02-23,App crashes repeatedly on startup.,Factory reset resolved the crashing issue.,,Software Crash
+RET-00081,Model-B200,SN-B20-00081,2026-01-06,Customer reports intermittent loss of network signal.,Replaced WiFi/Bluetooth module.,,Connectivity Issue
+RET-00082,Model-A100,SN-A10-00082,2026-04-17,"Customer Priya Nair reported: Housing cracked near hinge, likely from a drop.",Replaced latch mechanism.,physical_damage,Physical Damage
+RET-00083,Model-A100,SN-A10-00083,2026-04-09,Display is completely blank but unit powers on.,Replaced display driver IC on board.,,Display Fault
+RET-00084,Model-A100,SN-A10-00084,2025-08-16,Rattling noise when device is moved.,Tightened loose internal bracket causing rattle.,,Unusual Noise
+RET-00085,Model-C300,SN-C30-00085,2026-05-18,Customer reports burning smell and excessive heat near vents.,Cleaned dust from heat sink and fan assembly.,,Overheating
+RET-00086,Model-C300,SN-C30-00086,2026-01-18,App crashes repeatedly on startup.,Reflashed firmware to latest stable version.,,Software Crash
+RET-00087,Model-A100,SN-A10-00087,2025-08-18,Customer reports burning smell and excessive heat near vents.,Cleaned dust from heat sink and fan assembly.,,Overheating
+RET-00088,Model-A100,SN-A10-00088,2025-11-10,"Customer reports unit was dropped, casing damaged.",Replaced latch mechanism.,,Physical Damage
+RET-00089,Model-B200,SN-B20-00089,2026-01-06,Customer reports unit won't turn on even after charging overnight.,Replaced power supply board.,no_power,No Power
+RET-00090,Model-B200,SN-B20-00090,2025-12-30,Display is completely blank but unit powers on.,Replaced touch digitizer.,,Display Fault
+RET-00091,Model-B200,SN-B20-00091,2025-12-29,Rattling noise when device is moved.,Tightened loose internal bracket causing rattle.,,Unusual Noise
+RET-00092,Model-A100,SN-A10-00092,2025-12-22,Bluetooth pairing fails every time.,Updated network driver firmware.,,Connectivity Issue
+RET-00093,Model-B200,SN-B20-00093,2025-11-29,"No power, LED does not light up when plugged in.","Replaced battery, unit powers on normally now.",no_power,No Power
+RET-00094,Model-B200,SN-B20-00094,2026-03-19,"Customer Rahul Sharma reported: Broken latch, cover does not close properly.",Replaced latch mechanism.,physical_damage,Physical Damage
+RET-00095,Model-B200,SN-B20-00095,2025-10-29,Clicking sound heard during startup.,Replaced coil on power board causing whine.,,Unusual Noise
+RET-00096,Model-B200,SN-B20-00096,2026-06-23,"No power, LED does not light up when plugged in.","Replaced battery, unit powers on normally now.",no_power,No Power
+RET-00097,Model-C300,SN-C30-00097,2025-12-10,"Broken latch, cover does not close properly.",Replaced broken hinge assembly.,,Physical Damage
+RET-00098,Model-B200,SN-B20-00098,2026-03-24,Rattling noise when device is moved.,Tightened loose internal bracket causing rattle.,,Unusual Noise
+RET-00099,Model-B200,SN-B20-00099,2025-12-05,Unit overheats and shuts down after 20 minutes of operation.,Replaced thermal paste on main processor.,overheating,Overheating
+RET-00100,Model-C300,SN-C30-00100,2026-06-19,Bluetooth pairing fails every time.,Updated network driver firmware.,connectivity_issue,Connectivity Issue
+RET-00101,Model-A100,SN-A10-00101,2026-03-22,Screen shows vertical lines across display.,Replaced display panel assembly.,,Display Fault
+RET-00102,Model-A100,SN-A10-00102,2026-06-18,Loud grinding noise coming from internal fan.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00103,Model-B200,SN-B20-00103,2026-07-14,Customer Ananya Iyer reported: Touchscreen not responding in bottom half of screen.,Replaced display driver IC on board.,display_fault,Display Fault
+RET-00104,Model-C300,SN-C30-00104,2026-05-24,"Customer Rahul Sharma reported: Device completely dead, no response to power button.","Found loose power connector, reseated and resolved.",,No Power
+RET-00105,Model-B200,SN-B20-00105,2025-11-15,Customer reports battery does not hold charge overnight.,Updated firmware to fix power management bug.,battery_drain,Battery Drain
+RET-00106,Model-C300,SN-C30-00106,2026-03-06,Device freezes randomly during normal operation.,Rolled back faulty software update.,software_crash,Software Crash
+RET-00107,Model-A100,SN-A10-00107,2026-03-27,Battery drains fully within 2 hours of light use.,"Replaced battery cell, capacity restored.",,Battery Drain
+RET-00108,Model-A100,SN-A10-00108,2026-01-12,Customer reports unit won't turn on even after charging overnight.,Replaced fuse on main board.,no_power,No Power
+RET-00109,Model-C300,SN-C30-00109,2025-08-15,Device cannot detect any nearby WiFi networks.,Replaced WiFi/Bluetooth module.,,Connectivity Issue
+RET-00110,Model-C300,SN-C30-00110,2026-01-04,Battery drains fully within 2 hours of light use.,Replaced charging circuit board.,battery_drain,Battery Drain
+RET-00111,Model-B200,SN-B20-00111,2026-07-04,Screen shows vertical lines across display.,Reseated display ribbon cable.,,Display Fault
+RET-00112,Model-C300,SN-C30-00112,2025-12-28,Unit repeatedly disconnects from WiFi network.,Updated network driver firmware.,,Connectivity Issue
+RET-00113,Model-B200,SN-B20-00113,2025-12-28,Loud grinding noise coming from internal fan. Contact: +91 90000 11122.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00114,Model-B200,SN-B20-00114,2026-06-24,"Device completely dead, no response to power button.",Replaced power supply board.,,No Power
+RET-00115,Model-B200,SN-B20-00115,2026-05-12,Customer reports unit won't turn on even after charging overnight.,Replaced fuse on main board.,no_power,No Power
+RET-00116,Model-C300,SN-C30-00116,2025-09-18,Customer reports random restarts several times a day.,Reflashed firmware to latest stable version.,software_crash,Software Crash
+RET-00117,Model-B200,SN-B20-00117,2026-08-01,Thermal shutdown triggered repeatedly under light load.,Replaced faulty cooling fan.,overheating,Overheating
+RET-00118,Model-C300,SN-C30-00118,2025-12-20,Unit does not power on at all.,"Found loose power connector, reseated and resolved.",no_power,No Power
+RET-00119,Model-B200,SN-B20-00119,2025-09-07,"Dead on arrival, no boot, no lights.",Replaced fuse on main board.,no_power,No Power
+RET-00120,Model-B200,SN-B20-00120,2025-09-23,High pitched whining noise during operation.,Replaced noisy fan assembly.,,Unusual Noise
+RET-00121,Model-B200,SN-B20-00121,2025-08-17,High pitched whining noise during operation. Reach out at vikram.rao99@example.in for follow-up.,Replaced noisy fan assembly.,,Unusual Noise
+RET-00122,Model-C300,SN-C30-00122,2026-03-03,"Cracked display panel, screen partially visible.",Replaced display panel assembly.,display_fault,Display Fault
+RET-00123,Model-A100,SN-A10-00123,2026-06-10,Clicking sound heard during startup.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00124,Model-C300,SN-C30-00124,2026-01-09,Device cannot detect any nearby WiFi networks.,Updated network driver firmware.,,Connectivity Issue
+RET-00125,Model-B200,SN-B20-00125,2025-10-07,Device loses charge rapidly even in standby mode.,"Replaced battery cell, capacity restored.",,Battery Drain
+RET-00126,Model-B200,SN-B20-00126,2025-11-23,"Broken latch, cover does not close properly.",Replaced outer housing.,physical_damage,Physical Damage
+RET-00127,Model-C300,SN-C30-00127,2026-05-25,High pitched whining noise during operation.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00128,Model-C300,SN-C30-00128,2025-12-19,Unit stuck in boot loop after last update.,Reflashed firmware to latest stable version.,software_crash,Software Crash
+RET-00129,Model-B200,SN-B20-00129,2026-01-11,Battery drains fully within 2 hours of light use.,Updated firmware to fix power management bug.,,Battery Drain
+RET-00130,Model-B200,SN-B20-00130,2025-09-04,App crashes repeatedly on startup.,Factory reset resolved the crashing issue.,software_crash,Software Crash
+RET-00131,Model-C300,SN-C30-00131,2026-06-19,"Customer reports unit was dropped, casing damaged.",Replaced outer housing.,physical_damage,Physical Damage
+RET-00132,Model-C300,SN-C30-00132,2026-01-12,Display is completely blank but unit powers on.,Replaced display panel assembly.,,Display Fault
+RET-00133,Model-B200,SN-B20-00133,2025-09-11,Device freezes randomly during normal operation.,Factory reset resolved the crashing issue.,,Software Crash
+RET-00134,Model-B200,SN-B20-00134,2025-09-23,"Customer Priya Nair reported: Customer reports unit was dropped, casing damaged.",Replaced latch mechanism.,,Physical Damage
+RET-00135,Model-B200,SN-B20-00135,2026-06-24,Customer reports battery does not hold charge overnight.,"Replaced battery cell, capacity restored.",,Battery Drain
+RET-00136,Model-A100,SN-A10-00136,2026-05-16,Customer Vikram Rao reported: Rattling noise when device is moved.,Replaced noisy fan assembly.,unusual_noise,Unusual Noise
+RET-00137,Model-B200,SN-B20-00137,2026-04-06,"Cracked display panel, screen partially visible.",Replaced display driver IC on board.,,Display Fault
+RET-00138,Model-A100,SN-A10-00138,2026-06-30,"Cracked display panel, screen partially visible.",Replaced display driver IC on board.,display_fault,Display Fault
+RET-00139,Model-C300,SN-C30-00139,2026-04-13,"Flickering screen, gets worse when device is warm.",Replaced touch digitizer.,,Display Fault
+RET-00140,Model-B200,SN-B20-00140,2025-08-28,Bluetooth pairing fails every time.,Replaced WiFi/Bluetooth module.,connectivity_issue,Connectivity Issue
+RET-00141,Model-C300,SN-C30-00141,2025-09-16,Device cannot detect any nearby WiFi networks.,Reseated antenna connector.,,Connectivity Issue
+RET-00142,Model-A100,SN-A10-00142,2025-12-05,Device freezes randomly during normal operation.,Reflashed firmware to latest stable version.,software_crash,Software Crash
+RET-00143,Model-B200,SN-B20-00143,2026-07-29,Device cannot detect any nearby WiFi networks. Reach out at vikram.rao99@example.in for follow-up.,Updated network driver firmware.,,Connectivity Issue
+RET-00144,Model-C300,SN-C30-00144,2026-03-16,Clicking sound heard during startup.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00145,Model-A100,SN-A10-00145,2025-08-27,Bluetooth pairing fails every time. Reach out at vikram.rao99@example.in for follow-up.,Reseated antenna connector.,connectivity_issue,Connectivity Issue
+RET-00146,Model-B200,SN-B20-00146,2025-10-17,"No power, LED does not light up when plugged in. Contact: 9845012345.","Replaced battery, unit powers on normally now.",,No Power
+RET-00147,Model-A100,SN-A10-00147,2026-06-03,Battery percentage drops from 100 to 0 in minutes.,Replaced charging circuit board.,battery_drain,Battery Drain
+RET-00148,Model-A100,SN-A10-00148,2025-12-06,Customer reports intermittent loss of network signal.,Reseated antenna connector.,,Connectivity Issue
+RET-00149,Model-B200,SN-B20-00149,2026-06-30,Unit overheats and shuts down after 20 minutes of operation.,"Replaced temperature sensor, false trips resolved.",,Overheating
+RET-00150,Model-B200,SN-B20-00150,2026-08-09,"Fan not spinning, unit overheating quickly.",Cleaned dust from heat sink and fan assembly.,,Overheating
+RET-00151,Model-C300,SN-C30-00151,2025-10-14,Device cannot detect any nearby WiFi networks.,Reseated antenna connector.,connectivity_issue,Connectivity Issue
+RET-00152,Model-A100,SN-A10-00152,2026-07-28,Rattling noise when device is moved.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00153,Model-B200,SN-B20-00153,2025-09-11,Customer Vikram Rao reported: Device cannot detect any nearby WiFi networks.,Replaced WiFi/Bluetooth module.,,Connectivity Issue
+RET-00154,Model-A100,SN-A10-00154,2026-04-11,"Fan not spinning, unit overheating quickly.",Replaced thermal paste on main processor.,overheating,Overheating
+RET-00155,Model-C300,SN-C30-00155,2025-10-13,App crashes repeatedly on startup.,Factory reset resolved the crashing issue.,,Software Crash
+RET-00156,Model-C300,SN-C30-00156,2026-03-19,Device freezes randomly during normal operation.,Rolled back faulty software update.,software_crash,Software Crash
+RET-00157,Model-A100,SN-A10-00157,2026-06-20,"Broken latch, cover does not close properly.",Replaced latch mechanism.,,Physical Damage
+RET-00158,Model-A100,SN-A10-00158,2026-03-21,App crashes repeatedly on startup.,Reflashed firmware to latest stable version.,,Software Crash
+RET-00159,Model-A100,SN-A10-00159,2025-09-15,Battery drains fully within 2 hours of light use.,"Replaced battery cell, capacity restored.",battery_drain,Battery Drain
+RET-00160,Model-A100,SN-A10-00160,2026-07-05,Device loses charge rapidly even in standby mode.,Replaced charging circuit board.,,Battery Drain
+RET-00161,Model-B200,SN-B20-00161,2025-10-08,Screen shows vertical lines across display.,Replaced touch digitizer.,display_fault,Display Fault
+RET-00162,Model-A100,SN-A10-00162,2026-05-12,Unit repeatedly disconnects from WiFi network.,Reseated antenna connector.,connectivity_issue,Connectivity Issue
+RET-00163,Model-B200,SN-B20-00163,2025-10-12,Battery percentage drops from 100 to 0 in minutes.,"Replaced battery cell, capacity restored.",battery_drain,Battery Drain
+RET-00164,Model-C300,SN-C30-00164,2025-11-13,Device freezes randomly during normal operation. Contact: 9845012345.,Rolled back faulty software update.,,Software Crash
+RET-00165,Model-A100,SN-A10-00165,2025-11-25,Clicking sound heard during startup. Reach out at vikram.rao99@example.in for follow-up.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00166,Model-C300,SN-C30-00166,2026-07-09,Customer reports unit won't turn on even after charging overnight.,Replaced fuse on main board.,no_power,No Power
+RET-00167,Model-C300,SN-C30-00167,2026-07-03,Loud grinding noise coming from internal fan.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00168,Model-B200,SN-B20-00168,2026-01-26,"Broken latch, cover does not close properly.",Replaced broken hinge assembly.,physical_damage,Physical Damage
+RET-00169,Model-C300,SN-C30-00169,2025-09-08,"Fan not spinning, unit overheating quickly.",Replaced thermal paste on main processor.,,Overheating
+RET-00170,Model-B200,SN-B20-00170,2025-12-20,"Customer reports unit was dropped, casing damaged.",Replaced broken hinge assembly.,physical_damage,Physical Damage
+RET-00171,Model-B200,SN-B20-00171,2026-01-30,Bluetooth pairing fails every time.,Reseated antenna connector.,connectivity_issue,Connectivity Issue
+RET-00172,Model-A100,SN-A10-00172,2025-12-31,Device gets very hot to touch during normal use.,Replaced faulty cooling fan.,,Overheating
+RET-00173,Model-C300,SN-C30-00173,2025-08-31,"Housing cracked near hinge, likely from a drop.",Replaced broken hinge assembly.,,Physical Damage
+RET-00174,Model-B200,SN-B20-00174,2026-03-15,"Dead on arrival, no boot, no lights.","Found loose power connector, reseated and resolved.",,No Power
+RET-00175,Model-A100,SN-A10-00175,2025-09-07,"Flickering screen, gets worse when device is warm.",Reseated display ribbon cable.,display_fault,Display Fault
+RET-00176,Model-C300,SN-C30-00176,2026-06-12,"Broken latch, cover does not close properly.",Replaced latch mechanism.,physical_damage,Physical Damage
+RET-00177,Model-C300,SN-C30-00177,2025-10-02,"No power, LED does not light up when plugged in.",Replaced power supply board.,,No Power
+RET-00178,Model-B200,SN-B20-00178,2026-02-11,"Housing cracked near hinge, likely from a drop.",Replaced outer housing.,,Physical Damage
+RET-00179,Model-B200,SN-B20-00179,2026-07-01,Device gets very hot to touch during normal use.,Cleaned dust from heat sink and fan assembly.,overheating,Overheating
+RET-00180,Model-B200,SN-B20-00180,2026-02-16,Clicking sound heard during startup.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00181,Model-C300,SN-C30-00181,2026-07-14,Unit overheats and shuts down after 20 minutes of operation.,Replaced thermal paste on main processor.,overheating,Overheating
+RET-00182,Model-A100,SN-A10-00182,2025-12-26,Device cannot detect any nearby WiFi networks.,Updated network driver firmware.,connectivity_issue,Connectivity Issue
+RET-00183,Model-A100,SN-A10-00183,2026-02-14,Thermal shutdown triggered repeatedly under light load.,Cleaned dust from heat sink and fan assembly.,,Overheating
+RET-00184,Model-B200,SN-B20-00184,2026-07-17,Bluetooth pairing fails every time.,Updated network driver firmware.,connectivity_issue,Connectivity Issue
+RET-00185,Model-A100,SN-A10-00185,2026-04-23,Bluetooth pairing fails every time.,Updated network driver firmware.,connectivity_issue,Connectivity Issue
+RET-00186,Model-B200,SN-B20-00186,2026-05-12,App crashes repeatedly on startup.,Factory reset resolved the crashing issue.,software_crash,Software Crash
+RET-00187,Model-C300,SN-C30-00187,2026-07-04,"Customer Ananya Iyer reported: Customer reports unit was dropped, casing damaged.",Replaced latch mechanism.,,Physical Damage
+RET-00188,Model-B200,SN-B20-00188,2025-10-20,Customer reports random restarts several times a day.,Rolled back faulty software update.,software_crash,Software Crash
+RET-00189,Model-B200,SN-B20-00189,2026-02-24,"Device completely dead, no response to power button.",Replaced fuse on main board.,,No Power
+RET-00190,Model-A100,SN-A10-00190,2026-06-16,App crashes repeatedly on startup.,Factory reset resolved the crashing issue.,,Software Crash
+RET-00191,Model-B200,SN-B20-00191,2026-02-17,Bluetooth pairing fails every time.,Updated network driver firmware.,connectivity_issue,Connectivity Issue
+RET-00192,Model-C300,SN-C30-00192,2025-11-11,"Fan not spinning, unit overheating quickly.",Replaced thermal paste on main processor.,overheating,Overheating
+RET-00193,Model-C300,SN-C30-00193,2026-04-11,Screen shows vertical lines across display.,Reseated display ribbon cable.,display_fault,Display Fault
+RET-00194,Model-A100,SN-A10-00194,2026-05-11,Thermal shutdown triggered repeatedly under light load.,"Replaced temperature sensor, false trips resolved.",,Overheating
+RET-00195,Model-B200,SN-B20-00195,2025-09-22,"Broken latch, cover does not close properly.",Replaced outer housing.,physical_damage,Physical Damage
+RET-00196,Model-C300,SN-C30-00196,2026-03-22,Unit repeatedly disconnects from WiFi network.,Updated network driver firmware.,connectivity_issue,Connectivity Issue
+RET-00197,Model-B200,SN-B20-00197,2026-07-11,"Customer Karthik Reddy reported: No power, LED does not light up when plugged in.","Found loose power connector, reseated and resolved.",,No Power
+RET-00198,Model-B200,SN-B20-00198,2025-10-16,Loud grinding noise coming from internal fan.,Tightened loose internal bracket causing rattle.,,Unusual Noise
+RET-00199,Model-A100,SN-A10-00199,2025-10-04,"Customer reports unit was dropped, casing damaged.",Replaced latch mechanism.,physical_damage,Physical Damage
+RET-00200,Model-A100,SN-A10-00200,2025-08-09,"Housing cracked near hinge, likely from a drop.",Replaced latch mechanism.,physical_damage,Physical Damage
+RET-00201,Model-C300,SN-C30-00201,2025-12-28,Clicking sound heard during startup.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00202,Model-B200,SN-B20-00202,2025-08-27,"Housing cracked near hinge, likely from a drop.",Replaced latch mechanism.,physical_damage,Physical Damage
+RET-00203,Model-A100,SN-A10-00203,2026-03-17,Unit stuck in boot loop after last update.,Rolled back faulty software update.,,Software Crash
+RET-00204,Model-C300,SN-C30-00204,2026-02-20,Screen shows vertical lines across display.,Reseated display ribbon cable.,display_fault,Display Fault
+RET-00205,Model-C300,SN-C30-00205,2026-06-04,Device freezes randomly during normal operation.,Factory reset resolved the crashing issue.,,Software Crash
+RET-00206,Model-B200,SN-B20-00206,2025-08-31,"Cracked display panel, screen partially visible.",Replaced display panel assembly.,display_fault,Display Fault
+RET-00207,Model-B200,SN-B20-00207,2026-02-05,"No power, LED does not light up when plugged in.","Replaced battery, unit powers on normally now.",no_power,No Power
+RET-00208,Model-B200,SN-B20-00208,2026-04-16,Customer Karthik Reddy reported: Device loses charge rapidly even in standby mode.,"Replaced battery cell, capacity restored.",,Battery Drain
+RET-00209,Model-C300,SN-C30-00209,2025-09-05,"No power, LED does not light up when plugged in.","Replaced battery, unit powers on normally now.",no_power,No Power
+RET-00210,Model-A100,SN-A10-00210,2025-12-28,Screen shows vertical lines across display.,Replaced display driver IC on board.,,Display Fault
+RET-00211,Model-B200,SN-B20-00211,2025-12-23,Bluetooth pairing fails every time.,Reseated antenna connector.,,Connectivity Issue
+RET-00212,Model-B200,SN-B20-00212,2026-02-02,Customer reports battery does not hold charge overnight.,Updated firmware to fix power management bug.,,Battery Drain
+RET-00213,Model-C300,SN-C30-00213,2026-05-19,App crashes repeatedly on startup. Contact: +91-98765-43210.,Rolled back faulty software update.,,Software Crash
+RET-00214,Model-B200,SN-B20-00214,2025-11-22,Customer Vikram Rao reported: Device gets very hot to touch during normal use.,Replaced faulty cooling fan.,overheating,Overheating
+RET-00215,Model-C300,SN-C30-00215,2025-12-29,Screen shows vertical lines across display.,Reseated display ribbon cable.,,Display Fault
+RET-00216,Model-A100,SN-A10-00216,2026-07-13,Customer reports random restarts several times a day.,Rolled back faulty software update.,software_crash,Software Crash
+RET-00217,Model-A100,SN-A10-00217,2026-04-17,"Housing cracked near hinge, likely from a drop.",Replaced broken hinge assembly.,,Physical Damage
+RET-00218,Model-C300,SN-C30-00218,2026-05-27,Outer casing has visible dents and scratches.,Replaced outer housing.,,Physical Damage
+RET-00219,Model-C300,SN-C30-00219,2025-08-13,"Flickering screen, gets worse when device is warm.",Replaced display driver IC on board.,,Display Fault
+RET-00220,Model-A100,SN-A10-00220,2026-04-21,Bluetooth pairing fails every time.,Reseated antenna connector.,,Connectivity Issue
+RET-00221,Model-B200,SN-B20-00221,2026-08-01,Device gets very hot to touch during normal use.,Cleaned dust from heat sink and fan assembly.,,Overheating
+RET-00222,Model-C300,SN-C30-00222,2026-07-08,Loud grinding noise coming from internal fan.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00223,Model-C300,SN-C30-00223,2026-05-28,Battery percentage drops from 100 to 0 in minutes. Contact: +91-98765-43210.,Updated firmware to fix power management bug.,,Battery Drain
+RET-00224,Model-A100,SN-A10-00224,2025-11-14,Customer reports burning smell and excessive heat near vents.,Cleaned dust from heat sink and fan assembly.,,Overheating
+RET-00225,Model-C300,SN-C30-00225,2026-01-22,Customer reports unit won't turn on even after charging overnight.,Replaced power supply board.,,No Power
+RET-00226,Model-B200,SN-B20-00226,2026-02-08,Unit does not power on at all.,"Found loose power connector, reseated and resolved.",,No Power
+RET-00227,Model-A100,SN-A10-00227,2026-06-02,"Housing cracked near hinge, likely from a drop.",Replaced broken hinge assembly.,,Physical Damage
+RET-00228,Model-A100,SN-A10-00228,2025-08-18,High pitched whining noise during operation.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00229,Model-C300,SN-C30-00229,2026-07-22,Customer Rahul Sharma reported: Rattling noise when device is moved.,Replaced noisy fan assembly.,unusual_noise,Unusual Noise
+RET-00230,Model-B200,SN-B20-00230,2025-11-04,Customer reports random restarts several times a day. Reach out at rahul.sharma@example.com for follow-up.,Factory reset resolved the crashing issue.,software_crash,Software Crash
+RET-00231,Model-A100,SN-A10-00231,2026-03-23,"Housing cracked near hinge, likely from a drop.",Replaced broken hinge assembly.,physical_damage,Physical Damage
+RET-00232,Model-B200,SN-B20-00232,2026-02-17,App crashes repeatedly on startup.,Factory reset resolved the crashing issue.,software_crash,Software Crash
+RET-00233,Model-C300,SN-C30-00233,2026-06-28,Device cannot detect any nearby WiFi networks.,Replaced WiFi/Bluetooth module.,,Connectivity Issue
+RET-00234,Model-A100,SN-A10-00234,2026-02-26,Unit repeatedly disconnects from WiFi network.,Replaced WiFi/Bluetooth module.,connectivity_issue,Connectivity Issue
+RET-00235,Model-B200,SN-B20-00235,2026-05-16,Customer reports random restarts several times a day.,Factory reset resolved the crashing issue.,,Software Crash
+RET-00236,Model-B200,SN-B20-00236,2026-03-22,Device freezes randomly during normal operation.,Reflashed firmware to latest stable version.,software_crash,Software Crash
+RET-00237,Model-C300,SN-C30-00237,2026-07-25,Customer Priya Nair reported: Display is completely blank but unit powers on.,Replaced display driver IC on board.,,Display Fault
+RET-00238,Model-B200,SN-B20-00238,2026-01-25,"Housing cracked near hinge, likely from a drop.",Replaced latch mechanism.,physical_damage,Physical Damage
+RET-00239,Model-B200,SN-B20-00239,2025-12-25,"Housing cracked near hinge, likely from a drop. Contact: 9845012345.",Replaced latch mechanism.,physical_damage,Physical Damage
+RET-00240,Model-B200,SN-B20-00240,2026-06-12,Battery drains fully within 2 hours of light use.,Replaced charging circuit board.,,Battery Drain
+RET-00241,Model-C300,SN-C30-00241,2026-03-28,Customer reports burning smell and excessive heat near vents.,"Replaced temperature sensor, false trips resolved.",,Overheating
+RET-00242,Model-C300,SN-C30-00242,2026-04-29,Loud grinding noise coming from internal fan.,Replaced noisy fan assembly.,unusual_noise,Unusual Noise
+RET-00243,Model-C300,SN-C30-00243,2026-06-26,Rattling noise when device is moved.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00244,Model-C300,SN-C30-00244,2026-03-09,Bluetooth pairing fails every time.,Reseated antenna connector.,,Connectivity Issue
+RET-00245,Model-A100,SN-A10-00245,2025-11-22,Outer casing has visible dents and scratches.,Replaced outer housing.,,Physical Damage
+RET-00246,Model-A100,SN-A10-00246,2026-07-27,Rattling noise when device is moved.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00247,Model-C300,SN-C30-00247,2025-09-30,Screen shows vertical lines across display.,Replaced display panel assembly.,,Display Fault
+RET-00248,Model-C300,SN-C30-00248,2025-11-13,High pitched whining noise during operation.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00249,Model-B200,SN-B20-00249,2026-06-21,"Fan not spinning, unit overheating quickly. Reach out at vikram.rao99@example.in for follow-up.",Replaced faulty cooling fan.,,Overheating
+RET-00250,Model-A100,SN-A10-00250,2025-11-25,Device freezes randomly during normal operation.,Reflashed firmware to latest stable version.,software_crash,Software Crash
+RET-00251,Model-A100,SN-A10-00251,2025-08-11,Outer casing has visible dents and scratches.,Replaced broken hinge assembly.,,Physical Damage
+RET-00252,Model-B200,SN-B20-00252,2026-08-05,"Fan not spinning, unit overheating quickly. Contact: +91 90000 11122.",Replaced faulty cooling fan.,,Overheating
+RET-00253,Model-C300,SN-C30-00253,2025-10-10,"Cracked display panel, screen partially visible.",Reseated display ribbon cable.,,Display Fault
+RET-00254,Model-C300,SN-C30-00254,2025-10-25,"Housing cracked near hinge, likely from a drop. Reach out at vikram.rao99@example.in for follow-up.",Replaced outer housing.,physical_damage,Physical Damage
+RET-00255,Model-A100,SN-A10-00255,2025-09-27,Device freezes randomly during normal operation.,Factory reset resolved the crashing issue.,,Software Crash
+RET-00256,Model-C300,SN-C30-00256,2025-12-05,Bluetooth pairing fails every time.,Reseated antenna connector.,connectivity_issue,Connectivity Issue
+RET-00257,Model-C300,SN-C30-00257,2026-05-21,Customer reports unit won't turn on even after charging overnight.,Replaced fuse on main board.,no_power,No Power
+RET-00258,Model-C300,SN-C30-00258,2026-03-02,Touchscreen not responding in bottom half of screen.,Replaced touch digitizer.,display_fault,Display Fault
+RET-00259,Model-B200,SN-B20-00259,2026-07-31,Device gets very hot to touch during normal use.,Replaced faulty cooling fan.,overheating,Overheating
+RET-00260,Model-A100,SN-A10-00260,2026-01-25,Device cannot detect any nearby WiFi networks.,Replaced WiFi/Bluetooth module.,,Connectivity Issue
+RET-00261,Model-B200,SN-B20-00261,2026-05-04,Outer casing has visible dents and scratches.,Replaced broken hinge assembly.,physical_damage,Physical Damage
+RET-00262,Model-B200,SN-B20-00262,2026-07-29,Loud grinding noise coming from internal fan.,Tightened loose internal bracket causing rattle.,,Unusual Noise
+RET-00263,Model-A100,SN-A10-00263,2026-07-16,"Housing cracked near hinge, likely from a drop.",Replaced broken hinge assembly.,,Physical Damage
+RET-00264,Model-C300,SN-C30-00264,2026-03-16,Loud grinding noise coming from internal fan.,Replaced noisy fan assembly.,,Unusual Noise
+RET-00265,Model-C300,SN-C30-00265,2026-01-15,"Broken latch, cover does not close properly.",Replaced outer housing.,,Physical Damage
+RET-00266,Model-A100,SN-A10-00266,2025-10-30,"Broken latch, cover does not close properly.",Replaced outer housing.,physical_damage,Physical Damage
+RET-00267,Model-C300,SN-C30-00267,2025-09-24,Unit repeatedly disconnects from WiFi network.,Replaced WiFi/Bluetooth module.,connectivity_issue,Connectivity Issue
+RET-00268,Model-B200,SN-B20-00268,2026-05-28,Outer casing has visible dents and scratches.,Replaced latch mechanism.,,Physical Damage
+RET-00269,Model-A100,SN-A10-00269,2026-05-31,"No power, LED does not light up when plugged in.",Replaced fuse on main board.,no_power,No Power
+RET-00270,Model-C300,SN-C30-00270,2026-02-23,"Cracked display panel, screen partially visible.",Replaced touch digitizer.,,Display Fault
+RET-00271,Model-C300,SN-C30-00271,2025-10-10,Customer reports intermittent loss of network signal.,Reseated antenna connector.,,Connectivity Issue
+RET-00272,Model-C300,SN-C30-00272,2025-12-09,Unit repeatedly disconnects from WiFi network.,Updated network driver firmware.,connectivity_issue,Connectivity Issue
+RET-00273,Model-B200,SN-B20-00273,2025-08-22,Unit repeatedly disconnects from WiFi network.,Reseated antenna connector.,,Connectivity Issue
+RET-00274,Model-C300,SN-C30-00274,2026-07-14,Customer reports battery does not hold charge overnight.,"Replaced battery cell, capacity restored.",,Battery Drain
+RET-00275,Model-B200,SN-B20-00275,2025-08-26,Display is completely blank but unit powers on.,Replaced display panel assembly.,,Display Fault
+RET-00276,Model-A100,SN-A10-00276,2025-12-27,"No power, LED does not light up when plugged in.",Replaced fuse on main board.,,No Power
+RET-00277,Model-B200,SN-B20-00277,2026-07-09,Clicking sound heard during startup.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00278,Model-C300,SN-C30-00278,2025-11-13,High pitched whining noise during operation.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00279,Model-C300,SN-C30-00279,2025-11-03,"Broken latch, cover does not close properly.",Replaced latch mechanism.,,Physical Damage
+RET-00280,Model-C300,SN-C30-00280,2025-10-01,Device cannot detect any nearby WiFi networks.,Replaced WiFi/Bluetooth module.,connectivity_issue,Connectivity Issue
+RET-00281,Model-B200,SN-B20-00281,2026-03-10,Battery percentage drops from 100 to 0 in minutes.,Replaced charging circuit board.,,Battery Drain
+RET-00282,Model-B200,SN-B20-00282,2026-02-12,Rattling noise when device is moved. Reach out at vikram.rao99@example.in for follow-up.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00283,Model-B200,SN-B20-00283,2026-05-27,"Broken latch, cover does not close properly.",Replaced outer housing.,,Physical Damage
+RET-00284,Model-B200,SN-B20-00284,2025-09-08,Rattling noise when device is moved.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00285,Model-C300,SN-C30-00285,2025-10-26,Customer reports intermittent loss of network signal. Reach out at vikram.rao99@example.in for follow-up.,Replaced WiFi/Bluetooth module.,connectivity_issue,Connectivity Issue
+RET-00286,Model-A100,SN-A10-00286,2025-09-17,Device loses charge rapidly even in standby mode. Contact: +91 90000 11122.,"Replaced battery cell, capacity restored.",battery_drain,Battery Drain
+RET-00287,Model-C300,SN-C30-00287,2026-08-07,"Cracked display panel, screen partially visible.",Reseated display ribbon cable.,,Display Fault
+RET-00288,Model-B200,SN-B20-00288,2025-09-10,Clicking sound heard during startup.,Tightened loose internal bracket causing rattle.,,Unusual Noise
+RET-00289,Model-A100,SN-A10-00289,2025-11-09,Battery drains fully within 2 hours of light use.,"Replaced battery cell, capacity restored.",,Battery Drain
+RET-00290,Model-A100,SN-A10-00290,2025-11-29,App crashes repeatedly on startup.,Rolled back faulty software update.,,Software Crash
+RET-00291,Model-A100,SN-A10-00291,2026-03-10,"Dead on arrival, no boot, no lights.",Replaced power supply board.,no_power,No Power
+RET-00292,Model-B200,SN-B20-00292,2026-06-02,High pitched whining noise during operation.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00293,Model-A100,SN-A10-00293,2025-09-12,Rattling noise when device is moved.,Replaced coil on power board causing whine.,,Unusual Noise
+RET-00294,Model-B200,SN-B20-00294,2026-05-12,Customer reports battery does not hold charge overnight.,Updated firmware to fix power management bug.,battery_drain,Battery Drain
+RET-00295,Model-C300,SN-C30-00295,2026-05-07,Unit overheats and shuts down after 20 minutes of operation.,"Replaced temperature sensor, false trips resolved.",overheating,Overheating
+RET-00296,Model-B200,SN-B20-00296,2026-04-11,Customer reports random restarts several times a day.,Factory reset resolved the crashing issue.,software_crash,Software Crash
+RET-00297,Model-C300,SN-C30-00297,2026-03-29,"Customer Ananya Iyer reported: No power, LED does not light up when plugged in.","Replaced battery, unit powers on normally now.",no_power,No Power
+RET-00298,Model-B200,SN-B20-00298,2025-08-21,Unit repeatedly disconnects from WiFi network.,Reseated antenna connector.,connectivity_issue,Connectivity Issue
+RET-00299,Model-C300,SN-C30-00299,2026-04-19,Device loses charge rapidly even in standby mode.,Updated firmware to fix power management bug.,,Battery Drain
+RET-00300,Model-C300,SN-C30-00300,2026-01-09,"Customer reports unit was dropped, casing damaged.",Replaced latch mechanism.,,Physical Damage
+RET-00301,Model-A100,SN-A10-00301,2025-11-13,Thermal shutdown triggered repeatedly under light load. Reach out at rahul.sharma@example.com for follow-up.,Replaced faulty cooling fan.,overheating,Overheating
+RET-00302,Model-C300,SN-C30-00302,2025-10-20,Device loses charge rapidly even in standby mode.,"Replaced battery cell, capacity restored.",,Battery Drain
+RET-00303,Model-A100,SN-A10-00303,2025-10-15,Customer reports battery does not hold charge overnight.,"Replaced battery cell, capacity restored.",battery_drain,Battery Drain
+RET-00304,Model-A100,SN-A10-00304,2026-06-03,High pitched whining noise during operation.,Tightened loose internal bracket causing rattle.,,Unusual Noise
+RET-00305,Model-C300,SN-C30-00305,2026-07-29,Device cannot detect any nearby WiFi networks.,Updated network driver firmware.,,Connectivity Issue
+RET-00306,Model-C300,SN-C30-00306,2026-07-17,Thermal shutdown triggered repeatedly under light load.,Replaced faulty cooling fan.,,Overheating
+RET-00307,Model-A100,SN-A10-00307,2025-12-11,Device gets very hot to touch during normal use.,Replaced faulty cooling fan.,,Overheating
+RET-00308,Model-C300,SN-C30-00308,2026-01-30,Customer reports random restarts several times a day.,Factory reset resolved the crashing issue.,,Software Crash
+RET-00309,Model-B200,SN-B20-00309,2025-09-19,"Fan not spinning, unit overheating quickly.",Replaced thermal paste on main processor.,overheating,Overheating
+RET-00310,Model-A100,SN-A10-00310,2025-11-12,App crashes repeatedly on startup.,Rolled back faulty software update.,,Software Crash
+RET-00311,Model-A100,SN-A10-00311,2025-12-15,Device cannot detect any nearby WiFi networks.,Reseated antenna connector.,connectivity_issue,Connectivity Issue
+RET-00312,Model-B200,SN-B20-00312,2026-05-22,"Broken latch, cover does not close properly.",Replaced outer housing.,,Physical Damage
+RET-00313,Model-A100,SN-A10-00313,2025-09-05,Customer reports unit won't turn on even after charging overnight.,Replaced power supply board.,no_power,No Power
+RET-00314,Model-C300,SN-C30-00314,2025-12-24,"Dead on arrival, no boot, no lights.",Replaced power supply board.,no_power,No Power
+RET-00315,Model-B200,SN-B20-00315,2025-11-06,Device loses charge rapidly even in standby mode. Contact: +91-98765-43210.,"Replaced battery cell, capacity restored.",,Battery Drain
+RET-00316,Model-C300,SN-C30-00316,2025-10-18,"Broken latch, cover does not close properly.",Replaced outer housing.,physical_damage,Physical Damage
+RET-00317,Model-C300,SN-C30-00317,2026-01-10,Battery percentage drops from 100 to 0 in minutes. Reach out at vikram.rao99@example.in for follow-up.,Updated firmware to fix power management bug.,,Battery Drain
+RET-00318,Model-C300,SN-C30-00318,2025-10-29,Customer reports random restarts several times a day.,Reflashed firmware to latest stable version.,,Software Crash
+RET-00319,Model-C300,SN-C30-00319,2025-11-14,Unit stuck in boot loop after last update.,Rolled back faulty software update.,software_crash,Software Crash
+RET-00320,Model-B200,SN-B20-00320,2025-11-07,"Flickering screen, gets worse when device is warm.",Reseated display ribbon cable.,display_fault,Display Fault
+RET-00321,Model-C300,SN-C30-00321,2025-12-15,Screen shows vertical lines across display.,Replaced display driver IC on board.,,Display Fault
+RET-00322,Model-A100,SN-A10-00322,2026-04-07,Unit stuck in boot loop after last update.,Reflashed firmware to latest stable version.,software_crash,Software Crash
+RET-00323,Model-B200,SN-B20-00323,2026-06-23,Outer casing has visible dents and scratches.,Replaced outer housing.,,Physical Damage
+RET-00324,Model-C300,SN-C30-00324,2026-07-03,"Device completely dead, no response to power button.","Replaced battery, unit powers on normally now.",,No Power
+RET-00325,Model-B200,SN-B20-00325,2026-08-02,Bluetooth pairing fails every time.,Replaced WiFi/Bluetooth module.,connectivity_issue,Connectivity Issue
+RET-00326,Model-B200,SN-B20-00326,2025-08-18,Device loses charge rapidly even in standby mode.,Updated firmware to fix power management bug.,,Battery Drain
+RET-00327,Model-B200,SN-B20-00327,2025-12-14,Unit stuck in boot loop after last update.,Factory reset resolved the crashing issue.,,Software Crash
+RET-00328,Model-B200,SN-B20-00328,2026-06-20,High pitched whining noise during operation.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00329,Model-B200,SN-B20-00329,2025-10-25,"Device completely dead, no response to power button. Reach out at vikram.rao99@example.in for follow-up.","Replaced battery, unit powers on normally now.",,No Power
+RET-00330,Model-B200,SN-B20-00330,2026-05-23,Bluetooth pairing fails every time.,Updated network driver firmware.,,Connectivity Issue
+RET-00331,Model-A100,SN-A10-00331,2025-11-01,Rattling noise when device is moved.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00332,Model-C300,SN-C30-00332,2025-12-17,Clicking sound heard during startup.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00333,Model-C300,SN-C30-00333,2026-05-07,Customer Rahul Sharma reported: Loud grinding noise coming from internal fan.,Replaced coil on power board causing whine.,,Unusual Noise
+RET-00334,Model-B200,SN-B20-00334,2025-09-21,Display is completely blank but unit powers on.,Replaced display panel assembly.,display_fault,Display Fault
+RET-00335,Model-C300,SN-C30-00335,2026-01-30,Loud grinding noise coming from internal fan.,Replaced coil on power board causing whine.,,Unusual Noise
+RET-00336,Model-B200,SN-B20-00336,2026-08-01,Loud grinding noise coming from internal fan.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00337,Model-C300,SN-C30-00337,2025-11-08,Customer reports intermittent loss of network signal.,Replaced WiFi/Bluetooth module.,,Connectivity Issue
+RET-00338,Model-B200,SN-B20-00338,2026-06-16,Screen shows vertical lines across display.,Reseated display ribbon cable.,,Display Fault
+RET-00339,Model-B200,SN-B20-00339,2026-03-26,"Customer reports unit was dropped, casing damaged.",Replaced outer housing.,physical_damage,Physical Damage
+RET-00340,Model-C300,SN-C30-00340,2025-08-18,Device loses charge rapidly even in standby mode.,Updated firmware to fix power management bug.,,Battery Drain
+RET-00341,Model-C300,SN-C30-00341,2026-06-23,Customer reports unit won't turn on even after charging overnight.,Replaced fuse on main board.,no_power,No Power
+RET-00342,Model-C300,SN-C30-00342,2025-08-15,"Device completely dead, no response to power button.",Replaced power supply board.,no_power,No Power
+RET-00343,Model-B200,SN-B20-00343,2025-12-24,Unit overheats and shuts down after 20 minutes of operation.,Replaced thermal paste on main processor.,,Overheating
+RET-00344,Model-C300,SN-C30-00344,2026-03-24,Loud grinding noise coming from internal fan.,Replaced noisy fan assembly.,unusual_noise,Unusual Noise
+RET-00345,Model-C300,SN-C30-00345,2026-05-10,"No power, LED does not light up when plugged in.",Replaced power supply board.,,No Power
+RET-00346,Model-C300,SN-C30-00346,2026-07-01,Unit stuck in boot loop after last update.,Reflashed firmware to latest stable version.,,Software Crash
+RET-00347,Model-B200,SN-B20-00347,2026-01-25,Outer casing has visible dents and scratches.,Replaced latch mechanism.,,Physical Damage
+RET-00348,Model-B200,SN-B20-00348,2026-06-20,Customer reports unit won't turn on even after charging overnight.,"Replaced battery, unit powers on normally now.",no_power,No Power
+RET-00349,Model-C300,SN-C30-00349,2026-02-23,Device freezes randomly during normal operation.,Rolled back faulty software update.,,Software Crash
+RET-00350,Model-B200,SN-B20-00350,2026-02-08,Customer reports battery does not hold charge overnight.,Updated firmware to fix power management bug.,,Battery Drain
+RET-00351,Model-B200,SN-B20-00351,2026-07-13,Customer Ananya Iyer reported: Unit overheats and shuts down after 20 minutes of operation.,Cleaned dust from heat sink and fan assembly.,,Overheating
+RET-00352,Model-C300,SN-C30-00352,2026-01-22,Customer Vikram Rao reported: Touchscreen not responding in bottom half of screen.,Replaced touch digitizer.,display_fault,Display Fault
+RET-00353,Model-B200,SN-B20-00353,2026-08-09,Thermal shutdown triggered repeatedly under light load.,"Replaced temperature sensor, false trips resolved.",,Overheating
+RET-00354,Model-A100,SN-A10-00354,2026-06-25,"No power, LED does not light up when plugged in.",Replaced power supply board.,,No Power
+RET-00355,Model-B200,SN-B20-00355,2026-03-13,Customer reports unit won't turn on even after charging overnight.,Replaced fuse on main board.,,No Power
+RET-00356,Model-C300,SN-C30-00356,2025-10-21,Device loses charge rapidly even in standby mode.,Replaced charging circuit board.,battery_drain,Battery Drain
+RET-00357,Model-B200,SN-B20-00357,2025-11-30,Bluetooth pairing fails every time.,Replaced WiFi/Bluetooth module.,connectivity_issue,Connectivity Issue
+RET-00358,Model-B200,SN-B20-00358,2026-07-01,Rattling noise when device is moved.,Tightened loose internal bracket causing rattle.,,Unusual Noise
+RET-00359,Model-B200,SN-B20-00359,2025-12-18,Battery drains fully within 2 hours of light use.,"Replaced battery cell, capacity restored.",,Battery Drain
+RET-00360,Model-B200,SN-B20-00360,2026-02-22,Customer reports random restarts several times a day.,Factory reset resolved the crashing issue.,,Software Crash
+RET-00361,Model-C300,SN-C30-00361,2026-03-09,Touchscreen not responding in bottom half of screen.,Reseated display ribbon cable.,display_fault,Display Fault
+RET-00362,Model-B200,SN-B20-00362,2026-03-13,"Customer reports unit was dropped, casing damaged.",Replaced latch mechanism.,physical_damage,Physical Damage
+RET-00363,Model-B200,SN-B20-00363,2026-02-04,Device freezes randomly during normal operation.,Rolled back faulty software update.,,Software Crash
+RET-00364,Model-A100,SN-A10-00364,2025-12-16,"Device completely dead, no response to power button.",Replaced fuse on main board.,,No Power
+RET-00365,Model-A100,SN-A10-00365,2025-08-30,Customer reports random restarts several times a day.,Reflashed firmware to latest stable version.,software_crash,Software Crash
+RET-00366,Model-C300,SN-C30-00366,2026-01-05,"Flickering screen, gets worse when device is warm.",Replaced display panel assembly.,,Display Fault
+RET-00367,Model-C300,SN-C30-00367,2025-11-09,Customer reports random restarts several times a day. Contact: +91 90000 11122.,Rolled back faulty software update.,,Software Crash
+RET-00368,Model-C300,SN-C30-00368,2026-06-15,Unit overheats and shuts down after 20 minutes of operation.,Replaced faulty cooling fan.,,Overheating
+RET-00369,Model-C300,SN-C30-00369,2026-02-21,Customer reports random restarts several times a day. Contact: +91-98765-43210.,Reflashed firmware to latest stable version.,,Software Crash
+RET-00370,Model-C300,SN-C30-00370,2025-12-24,Battery percentage drops from 100 to 0 in minutes.,Updated firmware to fix power management bug.,,Battery Drain
+RET-00371,Model-C300,SN-C30-00371,2026-02-14,Screen shows vertical lines across display. Contact: +91-98765-43210.,Replaced display driver IC on board.,display_fault,Display Fault
+RET-00372,Model-C300,SN-C30-00372,2026-02-12,Touchscreen not responding in bottom half of screen.,Replaced touch digitizer.,display_fault,Display Fault
+RET-00373,Model-B200,SN-B20-00373,2025-12-09,"Housing cracked near hinge, likely from a drop.",Replaced broken hinge assembly.,physical_damage,Physical Damage
+RET-00374,Model-A100,SN-A10-00374,2026-07-18,Unit repeatedly disconnects from WiFi network.,Replaced WiFi/Bluetooth module.,,Connectivity Issue
+RET-00375,Model-C300,SN-C30-00375,2026-04-07,"Cracked display panel, screen partially visible.",Reseated display ribbon cable.,display_fault,Display Fault
+RET-00376,Model-B200,SN-B20-00376,2026-04-13,High pitched whining noise during operation.,Replaced coil on power board causing whine.,,Unusual Noise
+RET-00377,Model-B200,SN-B20-00377,2026-07-26,App crashes repeatedly on startup.,Factory reset resolved the crashing issue.,software_crash,Software Crash
+RET-00378,Model-C300,SN-C30-00378,2026-04-26,Battery percentage drops from 100 to 0 in minutes.,Replaced charging circuit board.,battery_drain,Battery Drain
+RET-00379,Model-A100,SN-A10-00379,2026-02-03,Touchscreen not responding in bottom half of screen.,Reseated display ribbon cable.,display_fault,Display Fault
+RET-00380,Model-B200,SN-B20-00380,2025-10-08,"Customer reports unit was dropped, casing damaged.",Replaced latch mechanism.,physical_damage,Physical Damage
+RET-00381,Model-B200,SN-B20-00381,2025-09-27,Clicking sound heard during startup.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00382,Model-C300,SN-C30-00382,2025-08-30,Unit overheats and shuts down after 20 minutes of operation. Contact: +91-98765-43210.,Replaced faulty cooling fan.,overheating,Overheating
+RET-00383,Model-C300,SN-C30-00383,2025-11-21,"Flickering screen, gets worse when device is warm.",Replaced display driver IC on board.,,Display Fault
+RET-00384,Model-B200,SN-B20-00384,2025-12-03,"Cracked display panel, screen partially visible.",Reseated display ribbon cable.,display_fault,Display Fault
+RET-00385,Model-A100,SN-A10-00385,2026-03-01,"Flickering screen, gets worse when device is warm.",Replaced display panel assembly.,,Display Fault
+RET-00386,Model-B200,SN-B20-00386,2026-05-02,"Flickering screen, gets worse when device is warm.",Replaced display driver IC on board.,display_fault,Display Fault
+RET-00387,Model-C300,SN-C30-00387,2025-12-02,Clicking sound heard during startup.,Replaced noisy fan assembly.,,Unusual Noise
+RET-00388,Model-A100,SN-A10-00388,2026-07-24,Customer reports intermittent loss of network signal.,Replaced WiFi/Bluetooth module.,connectivity_issue,Connectivity Issue
+RET-00389,Model-B200,SN-B20-00389,2025-11-01,Loud grinding noise coming from internal fan. Reach out at priya.n@mail.com for follow-up.,Replaced coil on power board causing whine.,,Unusual Noise
+RET-00390,Model-A100,SN-A10-00390,2025-11-03,Clicking sound heard during startup. Reach out at rahul.sharma@example.com for follow-up.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00391,Model-A100,SN-A10-00391,2026-03-28,Rattling noise when device is moved.,Replaced noisy fan assembly.,,Unusual Noise
+RET-00392,Model-A100,SN-A10-00392,2025-10-12,Battery percentage drops from 100 to 0 in minutes.,Replaced charging circuit board.,battery_drain,Battery Drain
+RET-00393,Model-C300,SN-C30-00393,2026-04-26,Display is completely blank but unit powers on.,Replaced display panel assembly.,,Display Fault
+RET-00394,Model-C300,SN-C30-00394,2026-02-25,Touchscreen not responding in bottom half of screen.,Replaced touch digitizer.,,Display Fault
+RET-00395,Model-C300,SN-C30-00395,2026-06-01,Thermal shutdown triggered repeatedly under light load.,Cleaned dust from heat sink and fan assembly.,,Overheating
+RET-00396,Model-A100,SN-A10-00396,2026-04-04,Display is completely blank but unit powers on.,Replaced touch digitizer.,,Display Fault
+RET-00397,Model-C300,SN-C30-00397,2025-12-02,App crashes repeatedly on startup.,Rolled back faulty software update.,,Software Crash
+RET-00398,Model-B200,SN-B20-00398,2026-07-02,Loud grinding noise coming from internal fan.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00399,Model-B200,SN-B20-00399,2025-12-03,Rattling noise when device is moved. Reach out at rahul.sharma@example.com for follow-up.,Replaced coil on power board causing whine.,,Unusual Noise
+RET-00400,Model-B200,SN-B20-00400,2026-07-08,"Customer reports unit was dropped, casing damaged.",Replaced outer housing.,,Physical Damage
+RET-00401,Model-B200,SN-B20-00401,2026-02-25,Customer reports intermittent loss of network signal.,Updated network driver firmware.,connectivity_issue,Connectivity Issue
+RET-00402,Model-B200,SN-B20-00402,2025-08-25,"Housing cracked near hinge, likely from a drop. Contact: +91-98765-43210.",Replaced outer housing.,physical_damage,Physical Damage
+RET-00403,Model-A100,SN-A10-00403,2025-12-19,Loud grinding noise coming from internal fan.,Tightened loose internal bracket causing rattle.,,Unusual Noise
+RET-00404,Model-A100,SN-A10-00404,2026-05-20,Customer reports intermittent loss of network signal.,Replaced WiFi/Bluetooth module.,connectivity_issue,Connectivity Issue
+RET-00405,Model-B200,SN-B20-00405,2026-07-14,"Flickering screen, gets worse when device is warm.",Replaced touch digitizer.,,Display Fault
+RET-00406,Model-B200,SN-B20-00406,2026-08-06,Unit overheats and shuts down after 20 minutes of operation. Reach out at rahul.sharma@example.com for follow-up.,"Replaced temperature sensor, false trips resolved.",,Overheating
+RET-00407,Model-B200,SN-B20-00407,2026-08-05,"No power, LED does not light up when plugged in.",Replaced power supply board.,no_power,No Power
+RET-00408,Model-A100,SN-A10-00408,2026-07-04,Customer Rahul Sharma reported: Clicking sound heard during startup.,Tightened loose internal bracket causing rattle.,unusual_noise,Unusual Noise
+RET-00409,Model-B200,SN-B20-00409,2026-01-26,Display is completely blank but unit powers on. Reach out at rahul.sharma@example.com for follow-up.,Reseated display ribbon cable.,,Display Fault
+RET-00410,Model-A100,SN-A10-00410,2026-02-11,Clicking sound heard during startup.,Replaced coil on power board causing whine.,,Unusual Noise
+RET-00411,Model-C300,SN-C30-00411,2026-04-20,Customer Karthik Reddy reported: Loud grinding noise coming from internal fan.,Replaced noisy fan assembly.,,Unusual Noise
+RET-00412,Model-B200,SN-B20-00412,2026-03-01,App crashes repeatedly on startup.,Reflashed firmware to latest stable version.,software_crash,Software Crash
+RET-00413,Model-C300,SN-C30-00413,2025-08-21,Unit repeatedly disconnects from WiFi network.,Reseated antenna connector.,connectivity_issue,Connectivity Issue
+RET-00414,Model-C300,SN-C30-00414,2026-01-21,Customer Ananya Iyer reported: Battery percentage drops from 100 to 0 in minutes.,Replaced charging circuit board.,battery_drain,Battery Drain
+RET-00415,Model-A100,SN-A10-00415,2025-09-17,Loud grinding noise coming from internal fan.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00416,Model-B200,SN-B20-00416,2026-06-03,"Customer reports unit was dropped, casing damaged.",Replaced latch mechanism.,,Physical Damage
+RET-00417,Model-A100,SN-A10-00417,2026-07-03,Loud grinding noise coming from internal fan. Contact: +91-98765-43210.,Replaced coil on power board causing whine.,unusual_noise,Unusual Noise
+RET-00418,Model-A100,SN-A10-00418,2025-11-23,Unit stuck in boot loop after last update.,Rolled back faulty software update.,,Software Crash
+RET-00419,Model-B200,SN-B20-00419,2026-06-28,Customer Karthik Reddy reported: App crashes repeatedly on startup.,Factory reset resolved the crashing issue.,,Software Crash
+RET-00420,Model-A100,SN-A10-00420,2026-01-21,"Housing cracked near hinge, likely from a drop.",Replaced broken hinge assembly.,,Physical Damage
+RET-00421,Model-A100,SN-A10-00421,2026-04-06,Unit does not power on at all. Reach out at vikram.rao99@example.in for follow-up.,Replaced fuse on main board.,no_power,No Power
+RET-00422,Model-C300,SN-C30-00422,2026-06-09,Screen shows vertical lines across display.,Reseated display ribbon cable.,display_fault,Display Fault
+RET-00423,Model-B200,SN-B20-00423,2026-05-16,Customer reports intermittent loss of network signal.,Replaced WiFi/Bluetooth module.,,Connectivity Issue
+RET-00424,Model-C300,SN-C30-00424,2026-07-25,Customer reports burning smell and excessive heat near vents.,"Replaced temperature sensor, false trips resolved.",overheating,Overheating
+RET-00425,Model-C300,SN-C30-00425,2025-11-28,Thermal shutdown triggered repeatedly under light load. Reach out at rahul.sharma@example.com for follow-up.,Replaced faulty cooling fan.,overheating,Overheating
+RET-00426,Model-B200,SN-B20-00426,2026-03-29,Device gets very hot to touch during normal use.,Replaced thermal paste on main processor.,overheating,Overheating
+RET-00427,Model-A100,SN-A10-00427,2026-07-17,Customer reports battery does not hold charge overnight.,Updated firmware to fix power management bug.,battery_drain,Battery Drain
+RET-00428,Model-A100,SN-A10-00428,2026-04-17,Unit stuck in boot loop after last update.,Reflashed firmware to latest stable version.,,Software Crash
+RET-00429,Model-B200,SN-B20-00429,2026-06-30,"Fan not spinning, unit overheating quickly.",Cleaned dust from heat sink and fan assembly.,,Overheating
+RET-00430,Model-A100,SN-A10-00430,2026-07-05,Customer reports random restarts several times a day.,Factory reset resolved the crashing issue.,software_crash,Software Crash
+RET-00431,Model-A100,SN-A10-00431,2026-08-05,Rattling noise when device is moved.,Replaced noisy fan assembly.,,Unusual Noise
+RET-00432,Model-C300,SN-C30-00432,2025-12-15,Battery percentage drops from 100 to 0 in minutes.,Replaced charging circuit board.,,Battery Drain
+RET-00433,Model-A100,SN-A10-00433,2026-05-24,Battery drains fully within 2 hours of light use. Reach out at priya.n@mail.com for follow-up.,Updated firmware to fix power management bug.,,Battery Drain
+RET-00434,Model-C300,SN-C30-00434,2026-02-19,Unit does not power on at all.,Replaced fuse on main board.,,No Power
+RET-00435,Model-A100,SN-A10-00435,2025-11-11,Device loses charge rapidly even in standby mode.,Updated firmware to fix power management bug.,battery_drain,Battery Drain
+RET-00436,Model-A100,SN-A10-00436,2026-06-23,Unit repeatedly disconnects from WiFi network.,Replaced WiFi/Bluetooth module.,,Connectivity Issue
+RET-00437,Model-C300,SN-C30-00437,2025-12-18,"Customer Ananya Iyer reported: Housing cracked near hinge, likely from a drop.",Replaced latch mechanism.,physical_damage,Physical Damage
+RET-00438,Model-C300,SN-C30-00438,2025-12-30,"Device completely dead, no response to power button.","Replaced battery, unit powers on normally now.",,No Power
+RET-00439,Model-B200,SN-B20-00439,2026-02-28,"Customer reports unit was dropped, casing damaged.",Replaced broken hinge assembly.,,Physical Damage
+RET-00440,Model-A100,SN-A10-00440,2026-05-22,Device gets very hot to touch during normal use.,Replaced thermal paste on main processor.,overheating,Overheating
+RET-00441,Model-A100,SN-A10-00441,2026-04-25,"Customer reports unit was dropped, casing damaged.",Replaced broken hinge assembly.,,Physical Damage
+RET-00442,Model-A100,SN-A10-00442,2025-08-23,Touchscreen not responding in bottom half of screen.,Replaced display panel assembly.,,Display Fault
+RET-00443,Model-A100,SN-A10-00443,2025-08-10,Unit overheats and shuts down after 20 minutes of operation.,Replaced faulty cooling fan.,overheating,Overheating
+RET-00444,Model-B200,SN-B20-00444,2026-05-12,Unit repeatedly disconnects from WiFi network.,Updated network driver firmware.,,Connectivity Issue
+RET-00445,Model-C300,SN-C30-00445,2026-06-22,Customer reports battery does not hold charge overnight.,"Replaced battery cell, capacity restored.",battery_drain,Battery Drain
+RET-00446,Model-A100,SN-A10-00446,2026-04-18,"Device completely dead, no response to power button.","Replaced battery, unit powers on normally now.",no_power,No Power
+RET-00447,Model-C300,SN-C30-00447,2025-10-15,"Fan not spinning, unit overheating quickly.",Replaced faulty cooling fan.,overheating,Overheating
+RET-00448,Model-A100,SN-A10-00448,2025-09-13,Customer reports battery does not hold charge overnight. Contact: +91-98765-43210.,"Replaced battery cell, capacity restored.",battery_drain,Battery Drain
+RET-00449,Model-B200,SN-B20-00449,2026-05-15,"Dead on arrival, no boot, no lights.",Replaced fuse on main board.,no_power,No Power
+RET-00450,Model-A100,SN-A10-00450,2025-08-25,Customer reports random restarts several times a day.,Reflashed firmware to latest stable version.,,Software Crash

@@ -1,0 +1,20 @@
+# --- Rename this file to ".gitignore" after downloading (see note below) ---
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Streamlit secrets -- NEVER commit real credentials
+.streamlit/secrets.toml
+
+# Local accounts/history database
+data/app.db
+
+# Generated per-run reports (can be large; regenerated from History anytime)
+reports/
+
+# OS/editor cruft
+.DS_Store
+.vscode/
