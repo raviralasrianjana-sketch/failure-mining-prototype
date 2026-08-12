@@ -192,6 +192,18 @@ def _get_ai_api_key():
         return None
 
 
+_openai_client_cache = {}
+
+
+def _get_openai_client(api_key: str):
+    """Reuse one OpenAI client per API key instead of creating a new one
+    on every single row -- cheap win now that calls run concurrently."""
+    if api_key not in _openai_client_cache:
+        from openai import OpenAI
+        _openai_client_cache[api_key] = OpenAI(api_key=api_key)
+    return _openai_client_cache[api_key]
+
+
 def llm_extract_fields(review_text: str):
     """
     Asks an LLM to identify the component, symptom, and severity in a
@@ -205,8 +217,7 @@ def llm_extract_fields(review_text: str):
         return None
 
     try:
-        from openai import OpenAI
-        client = OpenAI(api_key=api_key)
+        client = _get_openai_client(api_key)
 
         prompt = (
             "You extract structured info from a single product/service review. "
@@ -279,13 +290,30 @@ def preprocess_raw_reviews(df: pd.DataFrame, source_filename: str = "reviews"):
     rows_dropped = rows_in - len(working)
 
     ai_used = _get_ai_api_key() is not None
+    review_texts = list(working["_clean_review"])
     components, severities = [], []
-    for text in working["_clean_review"]:
-        fields = llm_extract_fields(text) if ai_used else None
-        if fields:
-            components.append(fields["component"])
-            severities.append(fields["severity"])
-        else:
+    if ai_used:
+        # Run the per-row LLM calls concurrently instead of one blocking
+        # network round-trip at a time -- this is the main speedup for
+        # "Analyze" on raw review files, since hundreds/thousands of
+        # sequential calls otherwise means minutes of dead time. These are
+        # I/O-bound (waiting on the network, not the CPU), so a higher
+        # worker count is safe and directly cuts wall-clock time -- capped
+        # so a tiny upload doesn't spin up more threads than it has rows.
+        from concurrent.futures import ThreadPoolExecutor
+
+        max_workers = min(24, max(1, len(review_texts)))
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            all_fields = list(executor.map(llm_extract_fields, review_texts))
+        for text, fields in zip(review_texts, all_fields):
+            if fields:
+                components.append(fields["component"])
+                severities.append(fields["severity"])
+            else:
+                components.append(_keyword_extract_component(text))
+                severities.append("Unknown")
+    else:
+        for text in review_texts:
             components.append(_keyword_extract_component(text))
             severities.append("Unknown")
 

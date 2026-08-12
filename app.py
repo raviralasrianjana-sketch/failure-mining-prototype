@@ -7,7 +7,7 @@ import streamlit as st
 
 import auth
 import chatbot
-from pipeline import run_pipeline, build_trend_table, build_insights, build_word_report
+from pipeline import run_pipeline_batch, build_insights, build_word_report
 
 st.set_page_config(
     page_title="Field Returns Failure Mode Mining",
@@ -32,11 +32,14 @@ os.makedirs(REPORTS_DIR, exist_ok=True)
 # ---------------------------------------------------------------------------
 # Cache the pipeline so it doesn't re-run on every single UI interaction
 # ---------------------------------------------------------------------------
-@st.cache_data
-def load_and_process(data_path, filename, n_clusters):
-    df, cluster_labels, k_used = run_pipeline(data_path, filename=filename, n_clusters=n_clusters)
-    trend = build_trend_table(df)
-    return df, cluster_labels, k_used, trend
+@st.cache_data(show_spinner=False)
+def load_and_process_batch(file_items, n_clusters):
+    """Process ALL uploaded files as one dataset.
+
+    The expensive TF-IDF + clustering stage is intentionally run once for the
+    combined batch instead of once per uploaded file.
+    """
+    return run_pipeline_batch(file_items, n_clusters=n_clusters)
 
 
 # ---------------------------------------------------------------------------
@@ -115,6 +118,19 @@ def render_auth_page():
         return
 
     # --- Continue with Google -------------------------------------------
+    _google_error = st.session_state.pop("google_auth_error", None)
+    if _google_error:
+        st.error(
+            f"Google sign-in didn't complete: {_google_error}\n\n"
+            "This is almost always a redirect-URL mismatch, not a bug in "
+            "this app -- double check: (1) `APP_URL` in secrets matches a "
+            "URL listed under Supabase -> Authentication -> URL "
+            "Configuration -> Redirect URLs, and (2) in Google Cloud "
+            "Console, the OAuth client's Authorized redirect URI is "
+            "Supabase's own callback (`https://<project-ref>.supabase.co/"
+            "auth/v1/callback`) -- not this app's URL."
+        )
+
     if st.button("🔵 Continue with Google", use_container_width=True):
         try:
             google_url = auth.get_google_login_url()
@@ -220,20 +236,18 @@ def render_upload_page():
         "screenshot) and click Analyze to start the failure mode analysis."
     )
 
-    uploaded_file = st.file_uploader(
-        "📂 Upload your service notes file",
+    uploaded_files = st.file_uploader(
+        "📂 Upload your service notes files",
         type=["csv", "xlsx", "xls", "tsv", "json", "pdf", "docx", "png", "jpg", "jpeg"],
-        help="Accepts CSV, Excel (.xlsx/.xls), TSV, JSON, PDF, Word (.docx), "
-             "or images (.png/.jpg/.jpeg -- text is read via OCR). Spreadsheet "
-             "files must include at least: product_model, date, symptom_text "
-             "columns. serial_range/serial_number and tag columns are optional "
-             "but used if present. PDFs/Word docs/images are read as free text "
-             "and parsed automatically.",
+        accept_multiple_files=True,
+        help="You can select multiple CSV, Excel, TSV, JSON, PDF, Word, or image files. "
+             "All files are combined into one dataset and analyzed together for consistent failure themes.",
     )
+
     st.caption(
-        "Supported input:  ✓ Structured Failure Mining datasets  "
-        "✓ Raw customer/review data (CSV/XLSX, e.g. a Google Reviews export) "
-        "-- the review/comment column is detected automatically."
+        "Supported input: ✓ Multiple structured Failure Mining datasets  "
+        "✓ Multiple raw customer/review files (CSV/XLSX, e.g. Google Reviews exports) "
+        "✓ PDF/Word/image files — all uploaded files are analyzed together."
     )
 
     auto_k = st.sidebar.checkbox("Auto-select number of themes", value=True)
@@ -241,47 +255,60 @@ def render_upload_page():
     if not auto_k:
         n_clusters = st.sidebar.slider("Number of themes (clusters)", 3, 12, 8)
 
-    if uploaded_file is None:
-        st.info("Please upload a file (CSV, Excel, PDF, Word, or image).")
+    if not uploaded_files:
+        st.info("Please upload one or more files (CSV, Excel, PDF, Word, or image).")
         return
 
-    st.success("File uploaded successfully.")
-    analyze = st.button("🔍 Analyze", type="primary")
+    st.success(f"{len(uploaded_files)} file(s) uploaded successfully.")
+    for uploaded_file in uploaded_files:
+        st.caption(f"• {uploaded_file.name}")
+
+    analyze = st.button("🔍 Analyze All Files", type="primary")
 
     if not analyze:
         return
 
-    import tempfile
     import traceback
 
-    _, real_ext = os.path.splitext(uploaded_file.name)
-    if not real_ext:
-        real_ext = ".csv"
-
-    with tempfile.NamedTemporaryFile(delete=False, suffix=real_ext) as tmp:
-        tmp.write(uploaded_file.getvalue())
-        data_path = tmp.name
-
     try:
-        with st.spinner("Running pipeline: sanitizing → vectorizing → clustering → labeling..."):
-            df, cluster_labels, k_used, trend = load_and_process(
-                data_path, uploaded_file.name, n_clusters
+        # Read each upload once, then send the complete batch to the pipeline.
+        # This is the key performance improvement: TF-IDF and KMeans run ONCE
+        # over the combined dataset instead of once for every file.
+        file_items = tuple(
+            (uploaded_file.name, uploaded_file.getvalue())
+            for uploaded_file in uploaded_files
+        )
+
+        with st.spinner(
+            f"Analyzing {len(uploaded_files)} file(s): "
+            "loading → sanitizing → vectorizing → clustering → labeling..."
+        ):
+            df, cluster_labels, k_used, trend, detection_info = load_and_process_batch(
+                file_items, n_clusters
             )
+
+        if df.empty:
+            st.error("No files could be analyzed.")
+            return
+
+        source_name = ", ".join(name for name, _ in file_items)
 
         st.session_state.df = df
         st.session_state.cluster_labels = cluster_labels
         st.session_state.k_used = k_used
         st.session_state.trend = trend
-        st.session_state.source_name = uploaded_file.name
-        st.session_state.detection_info = df.attrs.get("detection_info", {"input_type": "structured"})
+        st.session_state.source_name = source_name
+        st.session_state.detection_info = detection_info
         st.session_state.analysis_done = True
 
-        # --- Save a snapshot report + log this run to the profile's history ---
+        # Keep the existing report + history feature.
         top_theme = df["theme"].value_counts().idxmax() if len(df) else "N/A"
         insights_full = build_insights(df, top_n=k_used)
-        report_bytes = build_word_report(
-            df, trend, insights_full, k_used, source_name=uploaded_file.name
-        )
+        with st.spinner("Preparing your analysis report..."):
+            report_bytes = build_word_report(
+                df, trend, insights_full, k_used, source_name=source_name
+            )
+
         safe_email = st.session_state.user["email"].replace("@", "_at_").replace(".", "_")
         timestamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
         report_path = os.path.join(REPORTS_DIR, f"{safe_email}_{timestamp}.docx")
@@ -290,7 +317,7 @@ def render_upload_page():
 
         auth.add_history(
             user_email=st.session_state.user["email"],
-            source_name=uploaded_file.name,
+            source_name=source_name,
             total_notes=len(df),
             k_used=k_used,
             top_theme=top_theme,
@@ -302,9 +329,10 @@ def render_upload_page():
     except ValueError as e:
         st.error(str(e))
     except Exception as e:
-        st.error(f"Couldn't process this file: {e}")
+        st.error(f"Couldn't process the uploaded files: {e}")
         with st.expander("Full error details"):
             st.code(traceback.format_exc())
+
 
 
 # ---------------------------------------------------------------------------
@@ -376,7 +404,7 @@ def render_hub():
                 if st.button(sec["label"], key=f"nav_{sec['key']}", use_container_width=True):
                     go(sec["key"])
 
-    if st.button("⬅️ Analyze a different file"):
+    if st.button("⬅️ Analyze different files"):
         st.session_state.analysis_done = False
         go("upload")
 

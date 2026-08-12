@@ -400,33 +400,42 @@ def vectorize_text(texts):
 # 4. CLUSTER (group similar notes together)
 # ---------------------------------------------------------------------------
 def choose_best_k(matrix, k_range=range(4, 9)):
-    """
-    KMeans needs to be told how many clusters (k) to find. We don't know
-    the "true" number of failure themes in real data, so we try a range of
-    k values and pick the one with the best silhouette score (a measure of
-    how well-separated the clusters are -- higher is better, max is 1.0).
+    """Choose k with a faster, still data-driven silhouette search.
 
-    For a big dataset (a large CSV/Excel export), 4-8 clusters usually
-    makes sense. But a small upload (e.g. one PDF or photo with only a
-    few notes) can't support that many groups -- KMeans needs at least as
-    many notes as clusters. So we shrink the range of k values we try to
-    whatever is actually possible for this dataset's size.
+    The old implementation could perform up to 50 KMeans initializations
+    *per uploaded file*. Multi-file analysis now combines files first, so this
+    search happens only once. We also use fewer KMeans restarts and, for very
+    large datasets, score a representative sample rather than every row.
     """
     n_samples = matrix.shape[0]
     valid_range = [k for k in k_range if 2 <= k <= n_samples - 1]
 
     if not valid_range:
-        # Not enough notes for the usual 4-8 cluster range.
         if n_samples >= 3:
-            valid_range = [2]  # smallest meaningful clustering
-        else:
-            return 1  # 1-2 notes total: no meaningful clustering possible
+            return 2
+        return 1
 
-    best_k, best_score = valid_range[0], -1
+    # Keep the same 4-8 theme range, but don't spend forever scoring huge
+    # uploads. Silhouette is only used to select k; the final KMeans still
+    # runs on the complete dataset.
+    sample_size = min(1000, n_samples)
+    if n_samples > sample_size:
+        from sklearn.model_selection import train_test_split
+        sample_idx, _ = train_test_split(
+            range(n_samples), train_size=sample_size, random_state=42
+        )
+        score_matrix = matrix[sample_idx]
+    else:
+        score_matrix = matrix
+
+    best_k, best_score = valid_range[0], -1.0
     for k in valid_range:
-        km = KMeans(n_clusters=k, random_state=42, n_init=10)
-        labels = km.fit_predict(matrix)
-        score = silhouette_score(matrix, labels)
+        km = KMeans(n_clusters=k, random_state=42, n_init=3)
+        labels = km.fit_predict(score_matrix)
+        # A silhouette score needs at least two distinct labels.
+        if len(set(labels)) < 2:
+            continue
+        score = silhouette_score(score_matrix, labels)
         if score > best_score:
             best_k, best_score = k, score
     return best_k
@@ -463,7 +472,7 @@ def cluster_notes(matrix, n_clusters=None):
         km = _SingleClusterModel(centroid)
         return labels, km, 1
 
-    km = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+    km = KMeans(n_clusters=n_clusters, random_state=42, n_init=5)
     labels = km.fit_predict(matrix)
     return labels, km, n_clusters
 
@@ -570,6 +579,66 @@ def run_pipeline(path_or_buffer, filename: str = None, n_clusters=None):
 # ---------------------------------------------------------------------------
 # 6. TREND TABLE (counts per model per month per theme)
 # ---------------------------------------------------------------------------
+def run_pipeline_batch(file_items, n_clusters=None):
+    """Run one complete analysis over multiple uploaded files.
+
+    ``file_items`` is an iterable of ``(filename, bytes)`` pairs. Each file is
+    parsed independently because formats differ, but all resulting rows are
+    combined BEFORE sanitization, TF-IDF, clustering, and theme labeling.
+
+    This preserves the existing features while making multiple uploads much
+    faster and, importantly, gives all files a shared theme space.
+    """
+    from io import BytesIO
+
+    frames = []
+    detection_infos = []
+
+    for filename, file_bytes in file_items:
+        df_i = load_data(BytesIO(file_bytes), filename=filename)
+        frames.append(df_i)
+        detection_infos.append(
+            df_i.attrs.get("detection_info", {"input_type": "structured"})
+        )
+
+    if not frames:
+        raise ValueError("No files were uploaded.")
+
+    # Combine BEFORE the expensive ML steps.
+    df = pd.concat(frames, ignore_index=True)
+    df = sanitize_dataframe(df)
+
+    matrix, vectorizer = vectorize_text(df["symptom_text_clean"])
+    cluster_ids, km, k_used = cluster_notes(matrix, n_clusters=n_clusters)
+    cluster_labels = label_clusters(km, vectorizer)
+
+    df["cluster_id"] = cluster_ids
+    df["theme"] = df["cluster_id"].map(cluster_labels)
+
+    cluster_labels, tag_quality = apply_structured_tags(df, cluster_labels)
+    df["theme"] = df["cluster_id"].map(cluster_labels)
+    df["tag_agreement_pct"] = df["cluster_id"].map(
+        lambda c: tag_quality[c]["tag_agreement_pct"]
+    )
+
+    trend = build_trend_table(df)
+
+    raw_info = next(
+        (info for info in detection_infos if info.get("input_type") == "raw_reviews"),
+        None,
+    )
+    detection_info = raw_info or {
+        "input_type": "structured",
+        "files_processed": len(frames),
+    }
+    if raw_info is not None:
+        detection_info = dict(raw_info)
+        detection_info["files_processed"] = len(frames)
+
+    df.attrs["detection_info"] = detection_info
+    return df, cluster_labels, k_used, trend, detection_info
+
+
 def build_trend_table(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["month"] = df["date"].dt.to_period("M").astype(str)

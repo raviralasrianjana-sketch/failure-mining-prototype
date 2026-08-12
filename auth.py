@@ -26,6 +26,10 @@ from contextlib import contextmanager
 
 import streamlit as st
 from supabase import create_client, Client
+try:
+    from supabase import ClientOptions
+except ImportError:
+    from supabase.lib.client_options import ClientOptions
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "app.db")
 
@@ -53,7 +57,11 @@ def get_client() -> Client:
             "Supabase is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY "
             "to .streamlit/secrets.toml (see README.md -> 'Setting up Supabase Auth')."
         )
-    return create_client(url, key)
+    # flow_type="pkce" is required for server-side apps like this one --
+    # without it, Google's redirect can come back with tokens in the URL
+    # fragment (#access_token=...) instead of a ?code=... query param,
+    # and Streamlit's server-side code never sees a fragment at all.
+    return create_client(url, key, options=ClientOptions(flow_type="pkce"))
 
 
 def is_configured() -> bool:
@@ -190,7 +198,21 @@ def handle_auth_redirect():
     client = get_client()
     try:
         result = client.auth.exchange_code_for_session({"auth_code": code})
-    except Exception:
+    except Exception as e:
+        # Don't swallow this -- a failed exchange used to just silently
+        # bounce back to the login page with zero explanation, which is
+        # indistinguishable from "Continue with Google" doing nothing at
+        # all. Stash the real error so render_auth_page() can show it.
+        # The two most common causes:
+        #   1. APP_URL (secrets) doesn't exactly match a URL registered
+        #      under Supabase -> Authentication -> URL Configuration ->
+        #      Redirect URLs.
+        #   2. In Google Cloud Console, the OAuth client's "Authorized
+        #      redirect URI" must point to Supabase's own callback
+        #      (https://<project-ref>.supabase.co/auth/v1/callback), not
+        #      to this app's URL -- this app's URL only belongs in
+        #      Supabase's redirect-URL allowlist, not Google's.
+        st.session_state["google_auth_error"] = str(e)
         st.query_params.clear()
         return None
 
