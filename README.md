@@ -15,15 +15,16 @@ This matches the brief: **Service Notes → Top Failure Modes.**
 failure_mining/
 ├── generate_data.py         # Creates synthetic (fake) service notes -> data/service_notes.csv
 ├── pipeline.py               # The data science: sanitize -> vectorize -> cluster -> label -> trends
-├── auth.py                   # Accounts (email/password), profiles, history (SQLite)
+├── auth.py                   # Accounts (Supabase: email/password, Google, forgot password) + history (SQLite)
 ├── chatbot.py                 # Failure Mining AI Assistant (Gemini-powered chat, grounded in the analysis)
 ├── app.py                     # Streamlit app: login -> upload -> icon hub -> sections -> history
 ├── requirements.txt           # Python packages needed
+├── SUPABASE_SETUP.md           # Step-by-step: wiring up Google sign-in + forgot password
 ├── .streamlit/
-│   └── secrets.toml.example    # Template for AI Assistant (Gemini) config (copy -> secrets.toml)
+│   └── secrets.toml.example    # Template for AI Assistant + Supabase config (copy -> secrets.toml)
 ├── data/
 │   ├── service_notes.csv       # Generated synthetic dataset (450 notes)
-│   └── app.db                  # SQLite database: users + history (created automatically)
+│   └── app.db                  # SQLite database: analysis history (created automatically)
 ├── reports/                    # Saved snapshot .docx reports, one per analysis run
 └── README.md                  # You are here
 ```
@@ -44,32 +45,40 @@ pip install -r requirements.txt
 # 2. (Already done, but you can regenerate anytime)
 python generate_data.py
 
-# 3. (Optional) set up the Gemini-powered AI Assistant -- see section 3 below.
+# 3. Set up Supabase Auth (required for login to work) -- see SUPABASE_SETUP.md
+#    Without this, the login page shows a setup message instead of crashing.
+
+# 4. (Optional) set up the AI Assistant chatbot -- see section 3 below.
 #    Skip this if you don't need the chatbot yet.
 
-# 4. Launch the app
+# 5. Launch the app
 streamlit run app.py
 ```
 
 It'll open in your browser automatically (usually `http://localhost:8501`).
-First screen: **sign up or log in.**
+First screen: **sign up, log in, or continue with Google.**
 
 ---
 
-## 3. Accounts, profiles & history (new)
+## 3. Accounts, profiles & history
 
-- **Starting the app now always begins with sign-in.** Enter an email +
-  password to **sign up** (creates a profile) or **log in** (if you
-  already have one).
-- A **profile** (name, email, sign-in method, created date) is stored the
-  first time you sign up. It's saved locally in `data/app.db` (SQLite —
-  a single file, no server needed).
-- Every time you run an analysis, it's logged to **your profile's
-  History** (password hashed with bcrypt). Open History anytime from the
-  sidebar (🕒 History button) to see past runs and re-download their
-  saved reports.
-- Passwords are never stored as plain text — they're hashed with
-  **bcrypt** before touching the database.
+- **Starting the app now always begins with sign-in.** You can sign up
+  with email + password, log in, **continue with Google**, or, if you
+  forget your password, request a reset link — all handled by
+  [Supabase Auth](https://supabase.com) (a free hosted auth service).
+- Passwords are never touched or stored by this app at all — Supabase
+  handles hashing, storage, "forgot password" emails, and Google OAuth.
+  This also means people sign in with **real email addresses** instead
+  of throwaway ones.
+- **One-time setup required** before Google sign-in / password reset
+  will work: see **`SUPABASE_SETUP.md`** for the exact steps (create a
+  free Supabase project, add your keys to `.streamlit/secrets.toml`,
+  enable the Google provider). Until that's done, the login page shows
+  a clear setup message instead of crashing.
+- Every time you run an analysis, it's logged to **your History**
+  (still stored locally in `data/app.db`, a single SQLite file, keyed
+  by your email). Open History anytime from the sidebar (🕒 History
+  button) to see past runs and re-download their saved reports.
 
 ### Setting up the AI Assistant (optional)
 
@@ -228,10 +237,10 @@ top of `generate_data.py`, or increase `n_notes` for a bigger dataset.
 - The PII sanitizer uses simple regex, tuned to this demo's fake data
   patterns; production would need a proper NER model for robustness on
   real names/addresses.
-- Accounts/history use a local SQLite file and Streamlit session state —
-  fine for a single-machine demo, but not multi-device or highly
-  concurrent; a production version would use a real auth provider and
-  a hosted database.
+- Accounts now use Supabase (a real hosted auth provider), but analysis
+  **history** still lives in a local SQLite file — fine for a
+  single-machine demo, but a production version would move that to a
+  hosted database too, so history follows the account across devices.
 - Cluster labels are keyword lists (or a matched tag) — an LLM call
   would make them read even better.
 - This is explicitly an **MVP** — matches the brief's note: "MVP scope
@@ -248,5 +257,6 @@ top of `generate_data.py`, or increase `n_notes` for a bigger dataset.
 3. Add a feedback loop: let a technician mark "wrong cluster" on a note,
    and use that to fine-tune / re-cluster.
 4. Add anomaly detection to flag sudden spikes in a theme automatically.
-5. Move accounts/history from SQLite to a hosted database and add real
-   session cookies so login persists across browser restarts.
+5. Move analysis history from SQLite to a hosted database (Supabase can
+   hold this too), and add real session cookies so login persists
+   across browser restarts/tabs.

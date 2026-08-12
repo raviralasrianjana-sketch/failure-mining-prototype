@@ -17,6 +17,14 @@ st.set_page_config(
 
 auth.init_db()
 
+# Handle the browser bouncing back from Google sign-in or a "reset password"
+# email link (Supabase appends ?code=... to the URL in both cases).
+_redirect_result = auth.handle_auth_redirect()
+if _redirect_result == "recovery":
+    st.session_state.page = "reset_password"
+elif _redirect_result == "login":
+    st.session_state.page = "upload"
+
 REPORTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reports")
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
@@ -83,10 +91,9 @@ if "analysis_done" not in st.session_state:
 
 
 def do_logout():
-    user = st.session_state.get("user")
-    if user and user.get("provider") == "google" and hasattr(st, "logout"):
-        st.logout()
-    for key in ("user", "df", "cluster_labels", "k_used", "trend", "analysis_done", "source_name", "detection_info", "chat_history"):
+    auth.logout_user()
+    for key in ("user", "access_token", "refresh_token", "df", "cluster_labels", "k_used",
+                "trend", "analysis_done", "source_name", "detection_info", "chat_history"):
         st.session_state.pop(key, None)
     st.session_state.page = "auth"
     st.rerun()
@@ -99,9 +106,26 @@ def render_auth_page():
     st.title("🔧 Field Returns Failure Mode Mining")
     st.caption("Sign in to continue -- a profile is created automatically the first time.")
 
-    tab_login, tab_signup = st.tabs(
-        ["🔑 Log In", "🆕 Sign Up"]
-    )
+    if not auth.is_configured():
+        st.error(
+            "Supabase Auth isn't configured yet. Add `SUPABASE_URL` and "
+            "`SUPABASE_ANON_KEY` to `.streamlit/secrets.toml` -- see "
+            "README.md -> 'Setting up Supabase Auth'."
+        )
+        return
+
+    # --- Continue with Google -------------------------------------------
+    if st.button("🔵 Continue with Google", use_container_width=True):
+        try:
+            google_url = auth.get_google_login_url()
+            st.link_button("Click to continue to Google →", google_url, use_container_width=True)
+            st.caption("(Streamlit can't auto-redirect -- tap the link above.)")
+        except Exception as e:
+            st.error(f"Google sign-in isn't set up yet: {e}")
+
+    st.divider()
+
+    tab_login, tab_signup = st.tabs(["🔑 Log In", "🆕 Sign Up"])
 
     with tab_login:
         with st.form("login_form"):
@@ -117,8 +141,16 @@ def render_auth_page():
             else:
                 st.error(msg)
 
+        with st.expander("Forgot password?"):
+            with st.form("forgot_password_form"):
+                reset_email = st.text_input("Enter your account email", key="reset_email")
+                reset_submitted = st.form_submit_button("Send reset link")
+            if reset_submitted:
+                ok, msg = auth.request_password_reset(reset_email)
+                (st.success if ok else st.error)(msg)
+
     with tab_signup:
-        st.caption("Creates your profile -- used to save your analysis history.")
+        st.caption("Creates your account with Supabase -- use a real email, you'll need it to confirm/recover.")
         with st.form("signup_form"):
             name = st.text_input("Full name", key="signup_name")
             email = st.text_input("Email", key="signup_email")
@@ -127,10 +159,32 @@ def render_auth_page():
         if submitted:
             ok, msg = auth.signup_user(email, password, name)
             if ok:
-                user, _ = auth.login_user(email, password)
-                st.session_state.user = user
-                st.session_state.page = "upload"
-                st.rerun()
+                if "user" in st.session_state:
+                    st.session_state.page = "upload"
+                    st.rerun()
+                else:
+                    st.success(msg)
+            else:
+                st.error(msg)
+
+
+def render_reset_password_page():
+    st.title("🔑 Choose a new password")
+    st.caption("You've arrived here from a password-reset email link.")
+    with st.form("reset_password_form"):
+        new_password = st.text_input("New password (min 6 characters)", type="password", key="new_password")
+        confirm_password = st.text_input("Confirm new password", type="password", key="confirm_password")
+        submitted = st.form_submit_button("Update Password", type="primary")
+    if submitted:
+        if new_password != confirm_password:
+            st.error("Passwords don't match.")
+        else:
+            ok, msg = auth.update_password(new_password)
+            if ok:
+                st.success(msg)
+                if st.button("Go to Log In"):
+                    st.session_state.page = "auth"
+                    st.rerun()
             else:
                 st.error(msg)
 
@@ -600,7 +654,9 @@ def render_history():
 # ---------------------------------------------------------------------------
 # ROUTER
 # ---------------------------------------------------------------------------
-if "user" not in st.session_state:
+if st.session_state.page == "reset_password":
+    render_reset_password_page()
+elif "user" not in st.session_state:
     render_auth_page()
 else:
     st.sidebar.title("🔧 Controls")

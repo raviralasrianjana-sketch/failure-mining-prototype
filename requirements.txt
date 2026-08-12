@@ -1,14 +1,8 @@
-pandas>=2.0
-scikit-learn>=1.3
-streamlit>=1.42
-plotly>=5.18
-openpyxl>=3.1
-pdfplumber>=0.10
-python-docx>=1.1
-pytesseract>=0.3.10
-Pillow>=10.0
-matplotlib>=3.7
-bcrypt>=4.1
-Authlib>=1.3.2
-openai>=1.0   # optional: only used if OPENAI_API_KEY is configured for raw-review AI extraction
-groq>=0.11   # optional: only used if GROQ_API_KEY is configured for the AI Assistant chatbot
+streamlit
+pandas
+plotly
+scikit-learn
+python-docx
+openpyxl
+groq
+supabase
