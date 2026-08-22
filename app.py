@@ -131,13 +131,31 @@ def render_auth_page():
             "auth/v1/callback`) -- not this app's URL."
         )
 
-    if st.button("🔵 Continue with Google", use_container_width=True):
-        try:
-            google_url = auth.get_google_login_url()
-            st.link_button("Click to continue to Google →", google_url, use_container_width=True)
-            st.caption("(Streamlit can't auto-redirect -- tap the link above.)")
-        except Exception as e:
-            st.error(f"Google sign-in isn't set up yet: {e}")
+    if _google_error:
+        st.session_state.pop("google_login_url", None)
+        st.session_state.pop("pkce_code_verifier", None)
+
+    try:
+        if "google_login_url" not in st.session_state:
+            st.session_state.google_login_url = auth.get_google_login_url()
+        google_url = st.session_state.google_login_url
+        # Native Streamlit link (main page, not a sandboxed iframe) so the
+        # click actually leaves this app and opens Google's account picker.
+        st.link_button(
+            "🔵 Continue with Google",
+            google_url,
+            use_container_width=True,
+            type="primary",
+        )
+        # Same-window fallback: st.html is not iframed, so this <a> navigates
+        # the real browser tab (iframe sandbox blocks target=_top).
+        st.html(
+            f'<p style="text-align:center;margin:0.25rem 0 0;">'
+            f'<a href="{google_url}">Open Google sign-in in this tab</a>'
+            f"</p>"
+        )
+    except Exception as e:
+        st.error(f"Google sign-in isn't set up yet: {e}")
 
     st.divider()
 

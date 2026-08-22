@@ -33,6 +33,10 @@ except ImportError:
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "app.db")
 
+# PKCE verifier must survive Google opening in a new tab (new Streamlit
+# session). session_state does not carry over; this process-level store does.
+_LAST_PKCE_VERIFIER = None
+
 
 # ---------------------------------------------------------------------------
 # SUPABASE CLIENT
@@ -165,13 +169,29 @@ def update_password(new_password: str):
 # ---------------------------------------------------------------------------
 # GOOGLE OAUTH ("Continue with Google")
 # ---------------------------------------------------------------------------
+def _pkce_storage_key(client: Client) -> str:
+    return f"{client.auth._storage_key}-code-verifier"
+
+
 def get_google_login_url() -> str:
-    """Returns the URL to send the browser to in order to sign in with Google."""
+    """Returns the URL to send the browser to in order to sign in with Google.
+
+    The PKCE verifier is saved both in session_state and in a process-level
+    variable so the code exchange still works after Google sends the browser
+    back (including when Streamlit opens Google in a new tab).
+    """
+    global _LAST_PKCE_VERIFIER
     client = get_client()
     result = client.auth.sign_in_with_oauth({
         "provider": "google",
-        "options": {"redirect_to": _redirect_url()},
+        "options": {
+            "redirect_to": _redirect_url(),
+            "query_params": {"prompt": "select_account"},
+        },
     })
+    verifier = client.auth._storage.get_item(_pkce_storage_key(client))
+    _LAST_PKCE_VERIFIER = verifier
+    st.session_state["pkce_code_verifier"] = verifier
     return result.url
 
 
@@ -197,7 +217,11 @@ def handle_auth_redirect():
     is_recovery = params.get("type") == "recovery"
     client = get_client()
     try:
-        result = client.auth.exchange_code_for_session({"auth_code": code})
+        exchange = {"auth_code": code, "redirect_to": _redirect_url()}
+        verifier = st.session_state.get("pkce_code_verifier") or _LAST_PKCE_VERIFIER
+        if verifier:
+            exchange["code_verifier"] = verifier
+        result = client.auth.exchange_code_for_session(exchange)
     except Exception as e:
         # Don't swallow this -- a failed exchange used to just silently
         # bounce back to the login page with zero explanation, which is
@@ -217,6 +241,8 @@ def handle_auth_redirect():
         return None
 
     st.query_params.clear()  # keep the URL clean once the code is consumed
+    st.session_state.pop("pkce_code_verifier", None)
+    st.session_state.pop("google_login_url", None)
     _store_tokens(result)
 
     if is_recovery:
