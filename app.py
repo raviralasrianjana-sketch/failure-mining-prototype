@@ -88,15 +88,35 @@ def go(page_key):
 # SESSION STATE DEFAULTS
 # ---------------------------------------------------------------------------
 if "page" not in st.session_state:
-    st.session_state.page = "auth"
+    # The OAuth callback is handled before these defaults are initialized.
+    # On the first run after Google redirects back, handle_auth_redirect()
+    # has already selected the destination page; do not overwrite it with
+    # "auth" or the callback will appear to send the user back to sign-up.
+    if _redirect_result == "login":
+        st.session_state.page = "upload"
+    elif _redirect_result == "recovery":
+        st.session_state.page = "reset_password"
+    else:
+        st.session_state.page = "auth"
 if "analysis_done" not in st.session_state:
     st.session_state.analysis_done = False
 
 
 def do_logout():
     auth.logout_user()
-    for key in ("user", "access_token", "refresh_token", "df", "cluster_labels", "k_used",
-                "trend", "analysis_done", "source_name", "detection_info", "chat_history"):
+    for key in (
+        "user",
+        "access_token",
+        "refresh_token",
+        "df",
+        "cluster_labels",
+        "k_used",
+        "trend",
+        "analysis_done",
+        "source_name",
+        "detection_info",
+        "chat_history",
+    ):
         st.session_state.pop(key, None)
     st.session_state.page = "auth"
     st.rerun()
@@ -139,20 +159,14 @@ def render_auth_page():
         if "google_login_url" not in st.session_state:
             st.session_state.google_login_url = auth.get_google_login_url()
         google_url = st.session_state.google_login_url
-        # Native Streamlit link (main page, not a sandboxed iframe) so the
-        # click actually leaves this app and opens Google's account picker.
-        st.link_button(
-            "🔵 Continue with Google",
-            google_url,
-            use_container_width=True,
-            type="primary",
-        )
-        # Same-window fallback: st.html is not iframed, so this <a> navigates
-        # the real browser tab (iframe sandbox blocks target=_top).
+
+        # Use one plain anchor without target="_blank" so OAuth starts in the
+        # current browser tab. Avoid st.link_button(), which opens a new tab.
         st.html(
-            f'<p style="text-align:center;margin:0.25rem 0 0;">'
-            f'<a href="{google_url}">Open Google sign-in in this tab</a>'
-            f"</p>"
+            f'<a href="{google_url}" style="display:block;text-align:center;'
+            f"background:#ff4b4b;color:white;padding:0.6rem 1rem;"
+            f"border-radius:0.35rem;text-decoration:none;font-weight:600;"
+            f'">🔵 Continue with Google</a>'
         )
     except Exception as e:
         st.error(f"Google sign-in isn't set up yet: {e}")
@@ -164,8 +178,13 @@ def render_auth_page():
     with tab_login:
         with st.form("login_form"):
             email = st.text_input("Email", key="login_email")
-            password = st.text_input("Password", type="password", key="login_password")
+            password = st.text_input(
+                "Password",
+                type="password",
+                key="login_password",
+            )
             submitted = st.form_submit_button("Log In", type="primary")
+
         if submitted:
             user, msg = auth.login_user(email, password)
             if user:
@@ -177,21 +196,38 @@ def render_auth_page():
 
         with st.expander("Forgot password?"):
             with st.form("forgot_password_form"):
-                reset_email = st.text_input("Enter your account email", key="reset_email")
+                reset_email = st.text_input(
+                    "Enter your account email",
+                    key="reset_email",
+                )
                 reset_submitted = st.form_submit_button("Send reset link")
+
             if reset_submitted:
                 ok, msg = auth.request_password_reset(reset_email)
                 (st.success if ok else st.error)(msg)
 
     with tab_signup:
-        st.caption("Creates your account with Supabase -- use a real email, you'll need it to confirm/recover.")
+        st.caption(
+            "Creates your account with Supabase -- use a real email, "
+            "you'll need it to confirm/recover."
+        )
+
         with st.form("signup_form"):
             name = st.text_input("Full name", key="signup_name")
             email = st.text_input("Email", key="signup_email")
-            password = st.text_input("Password (min 6 characters)", type="password", key="signup_password")
-            submitted = st.form_submit_button("Create Account", type="primary")
+            password = st.text_input(
+                "Password (min 6 characters)",
+                type="password",
+                key="signup_password",
+            )
+            submitted = st.form_submit_button(
+                "Create Account",
+                type="primary",
+            )
+
         if submitted:
             ok, msg = auth.signup_user(email, password, name)
+
             if ok:
                 if "user" in st.session_state:
                     st.session_state.page = "upload"
@@ -205,17 +241,32 @@ def render_auth_page():
 def render_reset_password_page():
     st.title("🔑 Choose a new password")
     st.caption("You've arrived here from a password-reset email link.")
+
     with st.form("reset_password_form"):
-        new_password = st.text_input("New password (min 6 characters)", type="password", key="new_password")
-        confirm_password = st.text_input("Confirm new password", type="password", key="confirm_password")
-        submitted = st.form_submit_button("Update Password", type="primary")
+        new_password = st.text_input(
+            "New password (min 6 characters)",
+            type="password",
+            key="new_password",
+        )
+        confirm_password = st.text_input(
+            "Confirm new password",
+            type="password",
+            key="confirm_password",
+        )
+        submitted = st.form_submit_button(
+            "Update Password",
+            type="primary",
+        )
+
     if submitted:
         if new_password != confirm_password:
             st.error("Passwords don't match.")
         else:
             ok, msg = auth.update_password(new_password)
+
             if ok:
                 st.success(msg)
+
                 if st.button("Go to Log In"):
                     st.session_state.page = "auth"
                     st.rerun()
@@ -228,16 +279,20 @@ def render_reset_password_page():
 # ---------------------------------------------------------------------------
 def render_sidebar_profile():
     user = st.session_state.user
+
     st.sidebar.markdown("### 👤 Profile")
     st.sidebar.write(f"**{user['name']}**")
     st.sidebar.caption(user["email"])
     st.sidebar.caption(
-        "Signed in via " + ("Google" if user["provider"] == "google" else "Email & Password")
+        "Signed in via "
+        + ("Google" if user["provider"] == "google" else "Email & Password")
     )
 
     c1, c2 = st.sidebar.columns(2)
+
     if c1.button("🕒 History", use_container_width=True):
         go("history")
+
     if c2.button("🚪 Log Out", use_container_width=True):
         do_logout()
 
@@ -256,32 +311,64 @@ def render_upload_page():
 
     uploaded_files = st.file_uploader(
         "📂 Upload your service notes files",
-        type=["csv", "xlsx", "xls", "tsv", "json", "pdf", "docx", "png", "jpg", "jpeg"],
+        type=[
+            "csv",
+            "xlsx",
+            "xls",
+            "tsv",
+            "json",
+            "pdf",
+            "docx",
+            "png",
+            "jpg",
+            "jpeg",
+        ],
         accept_multiple_files=True,
-        help="You can select multiple CSV, Excel, TSV, JSON, PDF, Word, or image files. "
-             "All files are combined into one dataset and analyzed together for consistent failure themes.",
+        help=(
+            "You can select multiple CSV, Excel, TSV, JSON, PDF, Word, "
+            "or image files. All files are combined into one dataset and "
+            "analyzed together for consistent failure themes."
+        ),
     )
 
     st.caption(
         "Supported input: ✓ Multiple structured Failure Mining datasets  "
-        "✓ Multiple raw customer/review files (CSV/XLSX, e.g. Google Reviews exports) "
-        "✓ PDF/Word/image files — all uploaded files are analyzed together."
+        "✓ Multiple raw customer/review files (CSV/XLSX, e.g. Google "
+        "Reviews exports) ✓ PDF/Word/image files — all uploaded files "
+        "are analyzed together."
     )
 
-    auto_k = st.sidebar.checkbox("Auto-select number of themes", value=True)
+    auto_k = st.sidebar.checkbox(
+        "Auto-select number of themes",
+        value=True,
+    )
+
     n_clusters = None
+
     if not auto_k:
-        n_clusters = st.sidebar.slider("Number of themes (clusters)", 3, 12, 8)
+        n_clusters = st.sidebar.slider(
+            "Number of themes (clusters)",
+            3,
+            12,
+            8,
+        )
 
     if not uploaded_files:
-        st.info("Please upload one or more files (CSV, Excel, PDF, Word, or image).")
+        st.info(
+            "Please upload one or more files "
+            "(CSV, Excel, PDF, Word, or image)."
+        )
         return
 
     st.success(f"{len(uploaded_files)} file(s) uploaded successfully.")
+
     for uploaded_file in uploaded_files:
         st.caption(f"• {uploaded_file.name}")
 
-    analyze = st.button("🔍 Analyze All Files", type="primary")
+    analyze = st.button(
+        "🔍 Analyze All Files",
+        type="primary",
+    )
 
     if not analyze:
         return
@@ -293,7 +380,10 @@ def render_upload_page():
         # This is the key performance improvement: TF-IDF and KMeans run ONCE
         # over the combined dataset instead of once for every file.
         file_items = tuple(
-            (uploaded_file.name, uploaded_file.getvalue())
+            (
+                uploaded_file.name,
+                uploaded_file.getvalue(),
+            )
             for uploaded_file in uploaded_files
         )
 
@@ -301,15 +391,21 @@ def render_upload_page():
             f"Analyzing {len(uploaded_files)} file(s): "
             "loading → sanitizing → vectorizing → clustering → labeling..."
         ):
-            df, cluster_labels, k_used, trend, detection_info = load_and_process_batch(
-                file_items, n_clusters
-            )
+            (
+                df,
+                cluster_labels,
+                k_used,
+                trend,
+                detection_info,
+            ) = load_and_process_batch(file_items, n_clusters)
 
         if df.empty:
             st.error("No files could be analyzed.")
             return
 
-        source_name = ", ".join(name for name, _ in file_items)
+        source_name = ", ".join(
+            name for name, _ in file_items
+        )
 
         st.session_state.df = df
         st.session_state.cluster_labels = cluster_labels
@@ -320,16 +416,38 @@ def render_upload_page():
         st.session_state.analysis_done = True
 
         # Keep the existing report + history feature.
-        top_theme = df["theme"].value_counts().idxmax() if len(df) else "N/A"
-        insights_full = build_insights(df, top_n=k_used)
+        top_theme = (
+            df["theme"].value_counts().idxmax()
+            if len(df)
+            else "N/A"
+        )
+
+        insights_full = build_insights(
+            df,
+            top_n=k_used,
+        )
+
         with st.spinner("Preparing your analysis report..."):
             report_bytes = build_word_report(
-                df, trend, insights_full, k_used, source_name=source_name
+                df,
+                trend,
+                insights_full,
+                k_used,
+                source_name=source_name,
             )
 
-        safe_email = st.session_state.user["email"].replace("@", "_at_").replace(".", "_")
+        safe_email = (
+            st.session_state.user["email"]
+            .replace("@", "_at_")
+            .replace(".", "_")
+        )
+
         timestamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_path = os.path.join(REPORTS_DIR, f"{safe_email}_{timestamp}.docx")
+        report_path = os.path.join(
+            REPORTS_DIR,
+            f"{safe_email}_{timestamp}.docx",
+        )
+
         with open(report_path, "wb") as f:
             f.write(report_bytes)
 
@@ -346,11 +464,12 @@ def render_upload_page():
 
     except ValueError as e:
         st.error(str(e))
+
     except Exception as e:
         st.error(f"Couldn't process the uploaded files: {e}")
+
         with st.expander("Full error details"):
             st.code(traceback.format_exc())
-
 
 
 # ---------------------------------------------------------------------------
@@ -361,20 +480,44 @@ def get_filtered_data():
     trend = st.session_state.trend
 
     models = sorted(df["product_model"].unique())
-    selected_models = st.sidebar.multiselect("Filter by product model", models, default=models)
 
-    date_min, date_max = df["date"].min(), df["date"].max()
-    date_range = st.sidebar.date_input(
-        "Filter by date range", value=(date_min.date(), date_max.date())
+    selected_models = st.sidebar.multiselect(
+        "Filter by product model",
+        models,
+        default=models,
     )
 
-    filtered = df[df["product_model"].isin(selected_models)]
-    if isinstance(date_range, tuple) and len(date_range) == 2:
-        start, end = pd.Timestamp(date_range[0]), pd.Timestamp(date_range[1])
-        filtered = filtered[(filtered["date"] >= start) & (filtered["date"] <= end)]
+    date_min = df["date"].min()
+    date_max = df["date"].max()
 
-    trend_f = trend[trend["product_model"].isin(selected_models)]
-    trend_f = trend_f.groupby(["month", "theme"])["count"].sum().reset_index()
+    date_range = st.sidebar.date_input(
+        "Filter by date range",
+        value=(date_min.date(), date_max.date()),
+    )
+
+    filtered = df[
+        df["product_model"].isin(selected_models)
+    ]
+
+    if isinstance(date_range, tuple) and len(date_range) == 2:
+        start, end = date_range
+        start = pd.Timestamp(start)
+        end = pd.Timestamp(end)
+
+        filtered = filtered[
+            (filtered["date"] >= start)
+            & (filtered["date"] <= end)
+        ]
+
+    trend_f = trend[
+        trend["product_model"].isin(selected_models)
+    ]
+
+    trend_f = (
+        trend_f.groupby(["month", "theme"])["count"]
+        .sum()
+        .reset_index()
+    )
 
     return filtered, trend_f, selected_models
 
@@ -393,20 +536,30 @@ def render_hub():
 
     st.title("📊 Failure Mode Analysis Results")
     st.caption(
-        f"Source: {st.session_state.source_name}  ·  {len(df)} notes  ·  "
-        f"{k_used} failure themes discovered. Click a section below to open it."
+        f"Source: {st.session_state.source_name}  ·  "
+        f"{len(df)} notes  ·  {k_used} failure themes discovered. "
+        "Click a section below to open it."
     )
 
-    detection_info = st.session_state.get("detection_info", {"input_type": "structured"})
+    detection_info = st.session_state.get(
+        "detection_info",
+        {"input_type": "structured"},
+    )
+
     if detection_info.get("input_type") == "raw_reviews":
         ai_note = (
-            "AI-enhanced extraction" if detection_info.get("ai_extraction_used")
-            else "free keyword-based extraction (no AI API configured)"
+            "AI-enhanced extraction"
+            if detection_info.get("ai_extraction_used")
+            else "free keyword-based extraction "
+            "(no AI API configured)"
         )
+
         st.info(
             f"🔎 Detected input type: **Raw Review Data**  ·  "
-            f"Review column detected: **{detection_info.get('review_column')}**  ·  "
-            f"{detection_info.get('rows_dropped', 0)} empty/duplicate rows skipped  ·  "
+            f"Review column detected: "
+            f"**{detection_info.get('review_column')}**  ·  "
+            f"{detection_info.get('rows_dropped', 0)} "
+            "empty/duplicate rows skipped  ·  "
             f"Component/severity extracted via {ai_note}."
         )
 
@@ -415,11 +568,21 @@ def render_hub():
     for sec in SECTIONS:
         with st.container(border=True):
             c1, c2 = st.columns([1, 6])
+
             with c1:
-                st.markdown(f'<div class="icon-anim">{sec["icon"]}</div>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="icon-anim">{sec["icon"]}</div>',
+                    unsafe_allow_html=True,
+                )
+
             with c2:
                 st.write("")
-                if st.button(sec["label"], key=f"nav_{sec['key']}", use_container_width=True):
+
+                if st.button(
+                    sec["label"],
+                    key=f"nav_{sec['key']}",
+                    use_container_width=True,
+                ):
                     go(sec["key"])
 
     if st.button("⬅️ Analyze different files"):
@@ -435,20 +598,44 @@ def render_results_overview():
     k_used = st.session_state.k_used
 
     back_button()
+
     st.title("📊 Failure Mode Analysis Results")
     st.caption(
-        "Service/repair notes → clustered themes → trends → actionable insights. "
-        "All data below is synthetic (no real customer information)."
+        "Service/repair notes → clustered themes → trends → actionable "
+        "insights. All data below is synthetic (no real customer "
+        "information)."
     )
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total Notes (filtered)", len(filtered))
-    col2.metric("Themes Discovered", k_used)
-    top_theme = filtered["theme"].value_counts().idxmax() if len(filtered) else "N/A"
-    col3.metric("Top Failure Mode", top_theme)
-    col4.metric("Product Models", filtered["product_model"].nunique())
+
+    col1.metric(
+        "Total Notes (filtered)",
+        len(filtered),
+    )
+
+    col2.metric(
+        "Themes Discovered",
+        k_used,
+    )
+
+    top_theme = (
+        filtered["theme"].value_counts().idxmax()
+        if len(filtered)
+        else "N/A"
+    )
+
+    col3.metric(
+        "Top Failure Mode",
+        top_theme,
+    )
+
+    col4.metric(
+        "Product Models",
+        filtered["product_model"].nunique(),
+    )
 
     st.divider()
+
     st.caption(
         "Use the icons on the Hub to drill into themes, trends, model "
         "breakdowns, insights, and the downloadable report."
@@ -462,18 +649,36 @@ def render_theme_overview():
     filtered, _, _ = get_filtered_data()
 
     back_button()
+
     st.title("🧩 Failure Themes (Overall)")
 
-    theme_counts = filtered["theme"].value_counts().reset_index()
+    theme_counts = (
+        filtered["theme"]
+        .value_counts()
+        .reset_index()
+    )
+
     theme_counts.columns = ["theme", "count"]
 
     fig_bar = px.bar(
         theme_counts.sort_values("count"),
-        x="count", y="theme", orientation="h",
-        color="count", color_continuous_scale="Blues",
+        x="count",
+        y="theme",
+        orientation="h",
+        color="count",
+        color_continuous_scale="Blues",
     )
-    fig_bar.update_layout(showlegend=False, coloraxis_showscale=False, height=480)
-    st.plotly_chart(fig_bar, use_container_width=True)
+
+    fig_bar.update_layout(
+        showlegend=False,
+        coloraxis_showscale=False,
+        height=480,
+    )
+
+    st.plotly_chart(
+        fig_bar,
+        use_container_width=True,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -483,11 +688,29 @@ def render_trend():
     _, trend_f, _ = get_filtered_data()
 
     back_button()
+
     st.title("📈 Trend Over Time by Theme")
 
-    fig_line = px.line(trend_f, x="month", y="count", color="theme", markers=True)
-    fig_line.update_layout(height=480, legend=dict(orientation="h", y=-0.3))
-    st.plotly_chart(fig_line, use_container_width=True)
+    fig_line = px.line(
+        trend_f,
+        x="month",
+        y="count",
+        color="theme",
+        markers=True,
+    )
+
+    fig_line.update_layout(
+        height=480,
+        legend=dict(
+            orientation="h",
+            y=-0.3,
+        ),
+    )
+
+    st.plotly_chart(
+        fig_line,
+        use_container_width=True,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -497,12 +720,29 @@ def render_model_counts():
     filtered, _, _ = get_filtered_data()
 
     back_button()
+
     st.title("🏭 Failure Counts by Product Model")
 
-    model_theme = filtered.groupby(["product_model", "theme"]).size().reset_index(name="count")
-    fig_stack = px.bar(model_theme, x="product_model", y="count", color="theme", barmode="stack")
+    model_theme = (
+        filtered.groupby(["product_model", "theme"])
+        .size()
+        .reset_index(name="count")
+    )
+
+    fig_stack = px.bar(
+        model_theme,
+        x="product_model",
+        y="count",
+        color="theme",
+        barmode="stack",
+    )
+
     fig_stack.update_layout(height=450)
-    st.plotly_chart(fig_stack, use_container_width=True)
+
+    st.plotly_chart(
+        fig_stack,
+        use_container_width=True,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -513,23 +753,34 @@ def render_insights():
     k_used = st.session_state.k_used
 
     back_button()
+
     st.title("💡 Actionable Insights Summary")
 
-    insights = build_insights(filtered, top_n=k_used)
+    insights = build_insights(
+        filtered,
+        top_n=k_used,
+    )
 
     for ins in insights:
         header = (
-            f"**{ins['theme']}** — {ins['count']} notes ({ins['pct_of_total']}% of total) · "
+            f"**{ins['theme']}** — "
+            f"{ins['count']} notes "
+            f"({ins['pct_of_total']}% of total) · "
             f"most affected: {ins['most_affected_model']} · "
             f"serial range: {ins['most_common_serial_range']}"
         )
+
         with st.expander(header):
             if ins.get("tag_agreement_pct", 0) > 0:
                 st.caption(
-                    f"🏷️ Structured-tag agreement: {ins['tag_agreement_pct']}% "
-                    "(how often the technician's own tag matched this theme)"
+                    f"🏷️ Structured-tag agreement: "
+                    f"{ins['tag_agreement_pct']}% "
+                    "(how often the technician's own tag matched "
+                    "this theme)"
                 )
+
             st.markdown("**Example notes (sanitized):**")
+
             for ex in ins["examples"]:
                 st.markdown(f"- {ex}")
 
@@ -543,13 +794,22 @@ def render_data_report():
     trend = st.session_state.trend
 
     back_button()
+
     st.title("📄 Underlying Data & Report")
 
     st.subheader("Underlying Data (sanitized)")
+
     display_cols = [
-        "note_id", "product_model", "serial_range", "date", "theme", "tag",
-        "symptom_text_clean", "fix_text_clean",
+        "note_id",
+        "product_model",
+        "serial_range",
+        "date",
+        "theme",
+        "tag",
+        "symptom_text_clean",
+        "fix_text_clean",
     ]
+
     # component/severity only exist when the input was raw review data
     # (see review_preprocessor.py) -- shown only when present, so
     # structured datasets (which never have these columns) look exactly
@@ -557,36 +817,56 @@ def render_data_report():
     for extra_col in ("component", "severity"):
         if extra_col in filtered.columns:
             display_cols.append(extra_col)
-    st.dataframe(filtered[display_cols], use_container_width=True, height=320)
 
-    st.divider()
-    st.subheader("⬇️ Download Full Report")
-    st.caption(
-        "One Word document with the summary, all charts, and the actionable "
-        "insights for the currently filtered view -- ready to share or submit."
+    st.dataframe(
+        filtered[display_cols],
+        use_container_width=True,
+        height=320,
     )
 
-    insights = build_insights(filtered, top_n=k_used)
+    st.divider()
+
+    st.subheader("⬇️ Download Full Report")
+
+    st.caption(
+        "One Word document with the summary, all charts, and the "
+        "actionable insights for the currently filtered view -- ready "
+        "to share or submit."
+    )
+
+    insights = build_insights(
+        filtered,
+        top_n=k_used,
+    )
+
     with st.spinner("Building your report..."):
         report_bytes = build_word_report(
             filtered,
-            trend[trend["product_model"].isin(selected_models)],
+            trend[
+                trend["product_model"].isin(selected_models)
+            ],
             insights,
             k_used,
-            source_name=st.session_state.get("source_name", "uploaded file"),
+            source_name=st.session_state.get(
+                "source_name",
+                "uploaded file",
+            ),
         )
 
     st.download_button(
         label="📄 Download Analysis Report (Word)",
         data=report_bytes,
         file_name="failure_mode_analysis_report.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        mime=(
+            "application/vnd.openxmlformats-officedocument."
+            "wordprocessingml.document"
+        ),
         type="primary",
     )
 
     st.caption(
-        "A snapshot of the full (unfiltered) report was also saved to your "
-        "profile's History when you first ran this analysis."
+        "A snapshot of the full (unfiltered) report was also saved to "
+        "your profile's History when you first ran this analysis."
     )
 
 
@@ -598,37 +878,59 @@ def render_ai_assistant():
     k_used = st.session_state.k_used
 
     back_button()
+
     st.title("🤖 Failure Mining AI Assistant")
+
     st.caption(
-        "Ask questions about the current analysis results (themes, trends, "
-        "affected models). Answers are grounded only in this analysis -- "
-        "powered by Groq."
+        "Ask questions about the current analysis results (themes, "
+        "trends, affected models). Answers are grounded only in this "
+        "analysis -- powered by Groq."
     )
 
     if not chatbot.is_configured():
         st.warning(
-            "The AI Assistant isn't configured yet -- set `GROQ_API_KEY` "
-            "(as an environment variable or in `.streamlit/secrets.toml`). "
-            "See README.md -> 'Setting up the AI Assistant'."
+            "The AI Assistant isn't configured yet -- set "
+            "`GROQ_API_KEY` (as an environment variable or in "
+            "`.streamlit/secrets.toml`). See README.md -> "
+            "'Setting up the AI Assistant'."
         )
         return
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    insights = build_insights(filtered, top_n=k_used)
+    insights = build_insights(
+        filtered,
+        top_n=k_used,
+    )
+
     context = chatbot.build_context(
-        filtered, insights, trend_f, k_used,
-        source_name=st.session_state.get("source_name", "uploaded file"),
+        filtered,
+        insights,
+        trend_f,
+        k_used,
+        source_name=st.session_state.get(
+            "source_name",
+            "uploaded file",
+        ),
     )
 
     for turn in st.session_state.chat_history:
         with st.chat_message(turn["role"]):
             st.markdown(turn["content"])
 
-    question = st.chat_input("Ask about the failure themes, trends, or affected models...")
+    question = st.chat_input(
+        "Ask about the failure themes, trends, or affected models..."
+    )
+
     if question:
-        st.session_state.chat_history.append({"role": "user", "content": question})
+        st.session_state.chat_history.append(
+            {
+                "role": "user",
+                "content": question,
+            }
+        )
+
         with st.chat_message("user"):
             st.markdown(question)
 
@@ -636,13 +938,21 @@ def render_ai_assistant():
             with st.spinner("Thinking..."):
                 try:
                     answer = chatbot.ask_assistant(
-                        context, st.session_state.chat_history[:-1], question
+                        context,
+                        st.session_state.chat_history[:-1],
+                        question,
                     )
                 except RuntimeError as e:
                     answer = f"⚠️ {e}"
+
             st.markdown(answer)
 
-        st.session_state.chat_history.append({"role": "assistant", "content": answer})
+        st.session_state.chat_history.append(
+            {
+                "role": "assistant",
+                "content": answer,
+            }
+        )
 
     if st.session_state.chat_history:
         if st.button("🗑️ Clear chat"):
@@ -664,33 +974,52 @@ def render_history():
             go("upload")
 
     st.title("🕒 Analysis History")
-    st.caption(f"Past analyses run by {user['name']} ({user['email']}).")
+    st.caption(
+        f"Past analyses run by {user['name']} ({user['email']})."
+    )
 
     rows = auth.get_history(user["email"])
 
     if not rows:
-        st.info("No analyses yet -- upload a file to run your first one.")
+        st.info(
+            "No analyses yet -- upload a file to run your first one."
+        )
         return
 
     for row in rows:
-        when = row["created_at"].split(".")[0].replace("T", " ")
+        when = (
+            row["created_at"]
+            .split(".")[0]
+            .replace("T", " ")
+        )
+
         with st.container(border=True):
             c1, c2 = st.columns([4, 1])
+
             with c1:
-                st.markdown(f"**{row['source_name']}** · {when}")
+                st.markdown(
+                    f"**{row['source_name']}** · {when}"
+                )
+
                 st.caption(
-                    f"{row['total_notes']} notes · {row['k_used']} themes · "
+                    f"{row['total_notes']} notes · "
+                    f"{row['k_used']} themes · "
                     f"top failure mode: {row['top_theme']}"
                 )
+
             with c2:
                 report_path = row.get("report_path")
+
                 if report_path and os.path.exists(report_path):
                     with open(report_path, "rb") as f:
                         st.download_button(
                             "📄 Report",
                             data=f.read(),
                             file_name=os.path.basename(report_path),
-                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            mime=(
+                                "application/vnd.openxmlformats-officedocument."
+                                "wordprocessingml.document"
+                            ),
                             key=f"dl_{row['id']}",
                         )
                 else:
@@ -702,8 +1031,10 @@ def render_history():
 # ---------------------------------------------------------------------------
 if st.session_state.page == "reset_password":
     render_reset_password_page()
+
 elif "user" not in st.session_state:
     render_auth_page()
+
 else:
     st.sidebar.title("🔧 Controls")
     render_sidebar_profile()
@@ -712,24 +1043,34 @@ else:
 
     if page == "history":
         render_history()
+
     elif not st.session_state.analysis_done:
         render_upload_page()
+
     elif page == "hub" or page not in SECTION_KEYS:
         render_hub()
+
     elif page == "results_overview":
         render_results_overview()
+
     elif page == "theme_overview":
         render_theme_overview()
+
     elif page == "trend":
         render_trend()
+
     elif page == "model_counts":
         render_model_counts()
+
     elif page == "insights":
         render_insights()
+
     elif page == "data_report":
         render_data_report()
+
     elif page == "ai_assistant":
         render_ai_assistant()
+
     else:
         render_hub()
 
