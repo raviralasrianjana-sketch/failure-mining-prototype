@@ -6,3 +6,4 @@ python-docx
 openpyxl
 groq
 supabase
+pdfplumber
