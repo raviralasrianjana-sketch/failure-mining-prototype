@@ -162,11 +162,12 @@ def render_auth_page():
 
         # Use one plain anchor without target="_blank" so OAuth starts in the
         # current browser tab. Avoid st.link_button(), which opens a new tab.
-        st.html(
+        st.markdown(
             f'<a href="{google_url}" style="display:block;text-align:center;'
             f"background:#ff4b4b;color:white;padding:0.6rem 1rem;"
             f"border-radius:0.35rem;text-decoration:none;font-weight:600;"
-            f'">🔵 Continue with Google</a>'
+            f'">🔵 Continue with Google</a>',
+            unsafe_allow_html=True,
         )
     except Exception as e:
         st.error(f"Google sign-in isn't set up yet: {e}")
