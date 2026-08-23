@@ -762,14 +762,36 @@ def render_insights():
         top_n=k_used,
     )
 
+    # --- Compact executive summary (Change 5) ---
+    # insights is already sorted by frequency (most common theme first),
+    # same ordering build_insights has always used -- so insights[0] is
+    # the top failure theme without needing any new computation.
+    top_insight = insights[0] if insights else None
+
+    sum_col1, sum_col2, sum_col3, sum_col4 = st.columns(4)
+    sum_col1.metric("Reviews Analyzed", len(filtered))
+    sum_col2.metric("Failure Themes", k_used)
+    sum_col3.metric("Top Failure", top_insight["theme"] if top_insight else "N/A")
+    sum_col4.metric(
+        "Most Affected Model",
+        top_insight["most_affected_model"] if top_insight else "N/A",
+    )
+    st.divider()
+
     for ins in insights:
-        header = (
+        header_parts = [
             f"**{ins['theme']}** — "
             f"{ins['count']} notes "
             f"({ins['pct_of_total']}% of total) · "
-            f"most affected: {ins['most_affected_model']} · "
-            f"serial range: {ins['most_common_serial_range']}"
-        )
+            f"most affected: {ins['most_affected_model']}"
+        ]
+
+        # Change 3: only show serial range when it's actually meaningful.
+        serial_range = ins.get("most_common_serial_range")
+        if serial_range and serial_range != "Unknown":
+            header_parts.append(f"serial range: {serial_range}")
+
+        header = " · ".join(header_parts)
 
         with st.expander(header):
             if ins.get("tag_agreement_pct", 0) > 0:
@@ -778,6 +800,16 @@ def render_insights():
                     f"{ins['tag_agreement_pct']}% "
                     "(how often the technician's own tag matched "
                     "this theme)"
+                )
+
+            # Change 4: "Why this pattern?" -- honest, TF-IDF/KMeans-only
+            # explanation. No confidence scores, no semantic claims.
+            if ins.get("key_terms"):
+                st.markdown("**Why this pattern?**")
+                st.caption("Key terms: " + " · ".join(ins["key_terms"]))
+                st.caption(
+                    f"{ins['count']} reviews were grouped into this "
+                    "failure pattern."
                 )
 
             st.markdown("**Example notes (sanitized):**")

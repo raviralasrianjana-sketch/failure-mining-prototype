@@ -32,10 +32,12 @@ import re
 import io
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
+from sklearn.metrics.pairwise import cosine_similarity
 
 from review_preprocessor import is_structured_failure_data, preprocess_raw_reviews
 
@@ -368,9 +370,20 @@ def vectorize_text(texts):
     # "device", "unit"...). Left in, these words would dominate every
     # cluster centroid and drown out the words that actually distinguish
     # one failure type from another.
+    #
+    # Also includes generic vehicle nouns ("car", "vehicle", "model") and
+    # filler adverbs/verbs ("properly", "keeps", "does") that showed up
+    # in cluster labels like "Battery / Car / Properly" -- these say
+    # nothing about the failure itself, they're just noise that happened
+    # to have a high TF-IDF weight because the underlying dataset is
+    # about cars. Same fix as the words already in this list, just
+    # extended to cover what this dataset's notes actually look like.
     custom_stopwords = [
         "customer", "reports", "report", "reported", "device", "unit",
         "units", "issue", "problem", "time", "normal",
+        "car", "cars", "vehicle", "vehicles", "model",
+        "properly", "keeps", "keep", "does", "did", "doing",
+        "always", "never", "completely", "really", "just", "quite",
     ]
     stopwords = list(TfidfVectorizer(stop_words="english").get_stop_words()) + custom_stopwords
 
@@ -480,11 +493,69 @@ def cluster_notes(matrix, n_clusters=None):
 # ---------------------------------------------------------------------------
 # 5. LABEL CLUSTERS (turn "Cluster 3" into "Overheating / Thermal Shutdown")
 # ---------------------------------------------------------------------------
-def label_clusters(km, vectorizer, top_n=4):
+def _clean_theme_label(top_terms, max_terms=3):
+    """
+    Turns a list of TF-IDF top terms (already sorted by weight, highest
+    first) into a shorter, more readable label -- WITHOUT inventing any
+    diagnosis that isn't in the terms themselves.
+
+    Three purely mechanical cleanups, using only what TF-IDF already
+    gave us (no synonym dictionary, no LLM):
+      1. Prefer real two-word phrases over lone single words. vectorize_
+         text() already captures these (ngram_range=(1, 2)) -- so if the
+         notes actually contain a phrase like "battery start" or "start
+         morning", that phrase is sitting right there in the same
+         feature space, it just doesn't always out-rank single words on
+         raw weight alone. Surfacing it first turns something like
+         "Battery / Start / Morning" into "Battery Start / Morning" --
+         still 100% derived from the real text, just phrased the way it
+         actually appears in the notes instead of split into loose
+         words.
+      2. Skip a term if every one of its words is already covered by a
+         term we've already picked (e.g. skip standalone "battery" once
+         "battery start" was already picked) -- this removes the
+         redundant keyword-soup look like "Battery / Car / Properly /
+         Keeps" repeating the same idea.
+      3. Within each group (phrases, then single words), keep the
+         original weight-sorted order, so the label still reflects
+         genuine TF-IDF importance rather than an arbitrary re-ranking.
+
+    Caps at `max_terms` phrases so labels stay short enough for the UI.
+    Falls back to the original top terms if this cleanup would leave
+    nothing (shouldn't normally happen, but keeps this crash-proof).
+    """
+    phrases = [t for t in top_terms if " " in t]
+    single_words = [t for t in top_terms if " " not in t]
+    ordered_candidates = phrases + single_words
+
+    selected = []
+    used_words = set()
+
+    for term in ordered_candidates:
+        words = set(term.split())
+        if words & used_words:
+            continue
+        selected.append(term)
+        used_words |= words
+        if len(selected) >= max_terms:
+            break
+
+    if not selected:
+        selected = top_terms[:max_terms]
+
+    return " / ".join(t.title() for t in selected)
+
+
+def label_clusters(km, vectorizer, top_n=12, max_label_terms=3):
     """
     For each cluster, look at its centroid (the "average" note in that
     cluster) and pull out the words/phrases with the highest TF-IDF weight.
     Those words become the cluster's auto-generated label.
+
+    We look at `top_n` candidate terms (more than we'll actually display)
+    so that _clean_theme_label() has enough options both to find real
+    2-word phrases among the candidates and to drop redundant,
+    overlapping words -- purely keyword-based, no LLM involved.
 
     NOTE: In the original brief, this step was suggested to use Azure
     OpenAI to write a nicer label. That's a great upgrade -- just take
@@ -497,7 +568,7 @@ def label_clusters(km, vectorizer, top_n=4):
     for cluster_id, centroid in enumerate(km.cluster_centers_):
         top_indices = centroid.argsort()[::-1][:top_n]
         top_terms = [terms[i] for i in top_indices]
-        labels[cluster_id] = " / ".join(top_terms).title()
+        labels[cluster_id] = _clean_theme_label(top_terms, max_terms=max_label_terms)
     return labels
 
 
@@ -653,20 +724,63 @@ def build_trend_table(df: pd.DataFrame) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # 7. INSIGHTS SUMMARY (plain-English top drivers + examples)
 # ---------------------------------------------------------------------------
+def _select_representative_examples(texts, n=3):
+    """
+    Picks the `n` notes that are most representative of a failure theme,
+    using the SAME TF-IDF representation the pipeline already builds
+    everything else from (see vectorize_text()) -- no new algorithm, no
+    embeddings, no LLM.
+
+    "Representative" here means: closest (highest cosine similarity) to
+    the centroid of this theme's own notes in TF-IDF space -- exactly the
+    same idea KMeans uses internally (a centroid is just the mean of the
+    vectors assigned to it). This replaces the previous behavior, which
+    just took whichever unique notes happened to appear first, and could
+    surface an outlier note that doesn't actually support the theme.
+
+    Falls back to the first `n` notes (the old behavior) if there are too
+    few notes to vectorize meaningfully, or if anything about the TF-IDF
+    step fails -- this must never crash the Insights page.
+    """
+    unique_texts = pd.Series(texts).drop_duplicates().tolist()
+
+    if len(unique_texts) <= n:
+        return unique_texts
+
+    try:
+        matrix, _ = vectorize_text(unique_texts)
+        centroid = np.asarray(matrix.mean(axis=0))
+        similarities = cosine_similarity(matrix, centroid).ravel()
+        top_indices = similarities.argsort()[::-1][:n]
+        return [unique_texts[i] for i in top_indices]
+    except Exception:
+        return unique_texts[:n]
+
+
 def build_insights(df: pd.DataFrame, top_n=5, examples_per_theme=3):
     theme_counts = df["theme"].value_counts().head(top_n)
 
     insights = []
     for theme, count in theme_counts.items():
         pct = round(100 * count / len(df), 1)
-        examples = (
-            df[df["theme"] == theme]["symptom_text_clean"]
-            .drop_duplicates()
-            .head(examples_per_theme)
-            .tolist()
-        )
         theme_rows = df[df["theme"] == theme]
+        examples = _select_representative_examples(
+            theme_rows["symptom_text_clean"],
+            n=examples_per_theme,
+        )
         top_model = theme_rows["product_model"].value_counts().idxmax()
+
+        # Key terms for the "Why this pattern?" section -- reuses the
+        # theme's own auto-generated label (already TF-IDF-derived, see
+        # label_clusters()/_clean_theme_label()) rather than recomputing
+        # anything, so this never claims more than the existing model
+        # actually knows.
+        key_terms = []
+        for phrase in str(theme).split(" / "):
+            for word in phrase.split():
+                word = word.strip().lower()
+                if word and word not in key_terms:
+                    key_terms.append(word)
 
         # Serial range(s) most represented in this theme -- helps spot
         # whether a failure is concentrated in one manufacturing batch.
@@ -686,6 +800,7 @@ def build_insights(df: pd.DataFrame, top_n=5, examples_per_theme=3):
             "most_affected_model": top_model,
             "most_common_serial_range": top_serial,
             "tag_agreement_pct": tag_agreement,
+            "key_terms": key_terms,
             "examples": examples,
         })
     return insights
@@ -838,12 +953,20 @@ def build_word_report(
             level=2,
         )
         doc.add_paragraph(f"Most affected model: {ins['most_affected_model']}")
-        doc.add_paragraph(f"Most common serial range: {ins.get('most_common_serial_range', 'Unknown')}")
+
+        serial_range = ins.get("most_common_serial_range")
+        if serial_range and serial_range != "Unknown":
+            doc.add_paragraph(f"Most common serial range: {serial_range}")
+
         if ins.get("tag_agreement_pct", 0) > 0:
             doc.add_paragraph(
                 f"Structured-tag agreement: {ins['tag_agreement_pct']}% "
                 "(how often the technician's own tag matched this auto-discovered theme)"
             )
+
+        if ins.get("key_terms"):
+            doc.add_paragraph(f"Key terms: {' · '.join(ins['key_terms'])}")
+
         doc.add_paragraph("Example notes:")
         for ex in ins["examples"]:
             doc.add_paragraph(ex, style="List Bullet")
