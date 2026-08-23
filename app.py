@@ -7,7 +7,12 @@ import streamlit as st
 
 import auth
 import chatbot
-from pipeline import run_pipeline_batch, build_insights, build_word_report
+from pipeline import (
+    run_pipeline_batch,
+    build_insights,
+    build_word_report,
+    build_failure_analysis,
+)
 
 st.set_page_config(
     page_title="Field Returns Failure Mode Mining",
@@ -678,7 +683,7 @@ def get_filtered_data():
     df = st.session_state.df
     trend = st.session_state.trend
 
-    models = sorted(df["product_model"].unique())
+    models = sorted(df["product_model"].dropna().astype(str).unique())
 
     selected_models = st.sidebar.multiselect(
         "Filter by product model",
@@ -686,19 +691,23 @@ def get_filtered_data():
         default=models,
     )
 
-    date_min = df["date"].min()
-    date_max = df["date"].max()
-
-    date_range = st.sidebar.date_input(
-        "Filter by date range",
-        value=(date_min.date(), date_max.date()),
-    )
+    valid_dates = pd.to_datetime(df["date"], errors="coerce").dropna()
+    if len(valid_dates):
+        date_min = valid_dates.min()
+        date_max = valid_dates.max()
+        date_range = st.sidebar.date_input(
+            "Filter by date range",
+            value=(date_min.date(), date_max.date()),
+        )
+    else:
+        date_range = None
+        st.sidebar.caption("Date filtering unavailable — no usable date column.")
 
     filtered = df[
         df["product_model"].isin(selected_models)
     ]
 
-    if isinstance(date_range, tuple) and len(date_range) == 2:
+    if isinstance(date_range, (tuple, list)) and len(date_range) == 2:
         start, end = date_range
         start = pd.Timestamp(start)
         end = pd.Timestamp(end)
@@ -708,9 +717,7 @@ def get_filtered_data():
             & (filtered["date"] <= end)
         ]
 
-    trend_f = trend[
-        trend["product_model"].isin(selected_models)
-    ]
+    trend_f = trend[trend["product_model"].isin(selected_models)]
 
     trend_f = (
         trend_f.groupby(["month", "theme"])["count"]
@@ -795,26 +802,38 @@ def render_hub():
 def render_results_overview():
     filtered, trend_f, selected_models = get_filtered_data()
     k_used = st.session_state.k_used
+    analysis = build_failure_analysis(filtered, trend_f)
 
     back_button()
 
     st.title("📊 Failure Mode Analysis Results")
+    critical_count = sum(
+        item["priority"] == "Critical" for item in analysis.values()
+    )
+    emerging_count = sum(
+        (item["trend_change_pct"] is not None
+         and item["trend_change_pct"] > 10)
+        for item in analysis.values()
+    )
     st.caption(
-        "Service/repair notes → clustered themes → trends → actionable "
-        "insights. All data below is synthetic (no real customer "
-        "information)."
+        f"{len(analysis)} recurring failure patterns were identified across "
+        f"{len(filtered)} records"
+        + (f"; {emerging_count} show increasing occurrence over time."
+           if analysis and any(
+               item["temporal_analysis_available"] for item in analysis.values()
+           ) else ". Temporal analysis is unavailable without usable dates.")
     )
 
     col1, col2, col3, col4 = st.columns(4)
 
     col1.metric(
-        "Total Notes (filtered)",
+        "Total Failures (filtered)",
         len(filtered),
     )
 
     col2.metric(
-        "Themes Discovered",
-        k_used,
+        "Failure Patterns",
+        len(analysis),
     )
 
     top_theme = (
@@ -824,20 +843,85 @@ def render_results_overview():
     )
 
     col3.metric(
-        "Top Failure Mode",
-        top_theme,
+        "Critical Issues",
+        critical_count,
     )
 
     col4.metric(
-        "Product Models",
-        filtered["product_model"].nunique(),
+        "Emerging Issues",
+        emerging_count,
     )
 
     st.divider()
+    st.subheader("Priority failure patterns")
+    if not analysis:
+        st.info("No failure patterns match the current filters.")
+        return
 
+    # Keep the existing bordered-card language, adding decision-support
+    # fields without replacing the surrounding navigation or theme.
+    priority_order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}
+    for theme, item in sorted(
+        analysis.items(),
+        key=lambda pair: (priority_order[pair[1]["priority"]], -pair[1]["count"]),
+    ):
+        with st.container(border=True):
+            card_col, detail_col = st.columns([3, 2])
+            with card_col:
+                st.markdown(f"**{theme}**")
+                st.caption(
+                    f"{item['count']} related complaints · "
+                    f"{item['pct_of_total']}% of filtered failures"
+                )
+                st.write(
+                    f"**Priority:** {item['priority']}  ·  "
+                    f"**Likely component:** {item['component']}"
+                )
+                st.caption(f"Trend: {item['trend']}")
+            with detail_col:
+                with st.expander("View evidence & investigation"):
+                    st.markdown("**Common symptoms / representative evidence**")
+                    for symptom in item["symptoms"]:
+                        st.markdown(f"- {symptom}")
+                    st.markdown(
+                        "**Possible root cause:** "
+                        + item["possible_root_cause"]
+                    )
+                    st.caption(
+                        "This is a heuristic explanation based on complaint "
+                        "text, not a confirmed engineering diagnosis."
+                    )
+                    st.markdown(
+                        "**Recommended next action:** "
+                        + item["recommended_action"]
+                    )
+                    st.markdown("**AI-generated possible root-cause chain**")
+                    for why_number, why in enumerate(item["five_whys"], 1):
+                        st.caption(f"Why {why_number}: {why}")
+                    st.caption(
+                        "This is a possible 5-Whys chain based on available "
+                        "complaint text, not verified engineering analysis."
+                    )
+
+                    cluster_rows = filtered[filtered["theme"] == theme]
+                    st.markdown("**Underlying complaints**")
+                    drill_cols = [
+                        col for col in (
+                            "note_id", "date", "product_model",
+                            "serial_range", "symptom_text",
+                            "fix_text", "location", "rating",
+                        ) if col in cluster_rows.columns
+                    ]
+                    st.dataframe(
+                        cluster_rows[drill_cols].reset_index(drop=True),
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+
+    st.divider()
     st.caption(
-        "Use the icons on the Hub to drill into themes, trends, model "
-        "breakdowns, insights, and the downloadable report."
+        "Use the icons on the Hub to explore the full theme chart, trends, "
+        "model breakdown, insights, and downloadable report."
     )
 
 

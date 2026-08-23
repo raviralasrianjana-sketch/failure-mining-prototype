@@ -170,9 +170,9 @@ def parse_freeform_text_to_notes(raw_text: str, source_filename: str = "uploaded
             try:
                 note_date = pd.to_datetime(raw_date)
             except (ValueError, TypeError):
-                note_date = pd.Timestamp(datetime.today().date())
+                note_date = pd.NaT
         else:
-            note_date = pd.Timestamp(datetime.today().date())
+            note_date = pd.NaT
 
         symptom = remainder if remainder else line
 
@@ -258,7 +258,9 @@ def load_data(path_or_buffer, filename: str = None) -> pd.DataFrame:
 
     # Required columns check -- fail with a clear message rather than a
     # confusing crash deeper in the pipeline if the file is missing a column.
-    required = {"product_model", "date", "symptom_text"}
+    # Dates are optional: clustering and drill-down still work for text-only
+    # exports, while temporal views gracefully disable themselves.
+    required = {"product_model", "symptom_text"}
     missing = required - set(df.columns)
     if missing:
         raise ValueError(
@@ -266,7 +268,10 @@ def load_data(path_or_buffer, filename: str = None) -> pd.DataFrame:
             f"Expected at least: {', '.join(sorted(required))}."
         )
 
-    df["date"] = pd.to_datetime(df["date"])
+    if "date" not in df.columns:
+        df["date"] = pd.NaT
+    else:
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
     if "fix_text" not in df.columns:
         df["fix_text"] = ""
 
@@ -405,7 +410,19 @@ def vectorize_text(texts):
         max_df=max_df,
         max_features=500,
     )
-    matrix = vectorizer.fit_transform(texts)
+    try:
+        matrix = vectorizer.fit_transform(texts)
+    except ValueError:
+        # A tiny or heavily redacted dataset can contain only stopwords.
+        # Keep the analysis alive with a neutral token; the resulting single
+        # cluster is more honest than crashing or inventing a theme.
+        fallback_texts = [
+            text if str(text).strip() else "failure"
+            for text in texts
+        ]
+        fallback = TfidfVectorizer(ngram_range=(1, 2), min_df=1)
+        matrix = fallback.fit_transform(fallback_texts)
+        vectorizer = fallback
     return matrix, vectorizer
 
 
@@ -630,6 +647,9 @@ def apply_structured_tags(df: pd.DataFrame, cluster_labels: dict, min_tagged=3, 
 def run_pipeline(path_or_buffer, filename: str = None, n_clusters=None):
     df = load_data(path_or_buffer, filename=filename)
     df = sanitize_dataframe(df)
+    df = df[df["symptom_text_clean"].str.strip().ne("")].copy()
+    if df.empty:
+        raise ValueError("No usable complaint text was found in the uploaded file.")
 
     matrix, vectorizer = vectorize_text(df["symptom_text_clean"])
     cluster_ids, km, k_used = cluster_notes(matrix, n_clusters=n_clusters)
@@ -678,6 +698,9 @@ def run_pipeline_batch(file_items, n_clusters=None):
     # Combine BEFORE the expensive ML steps.
     df = pd.concat(frames, ignore_index=True)
     df = sanitize_dataframe(df)
+    df = df[df["symptom_text_clean"].str.strip().ne("")].copy()
+    if df.empty:
+        raise ValueError("No usable complaint text was found in the uploaded files.")
 
     matrix, vectorizer = vectorize_text(df["symptom_text_clean"])
     cluster_ids, km, k_used = cluster_notes(matrix, n_clusters=n_clusters)
@@ -712,6 +735,12 @@ def run_pipeline_batch(file_items, n_clusters=None):
 
 def build_trend_table(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
+    # Missing dates are valid for ordinary text-only exports.  Do not turn
+    # them into fabricated "today" values or a misleading temporal trend.
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    df = df[df["date"].notna()]
+    if df.empty:
+        return pd.DataFrame(columns=["month", "product_model", "theme", "count"])
     df["month"] = df["date"].dt.to_period("M").astype(str)
     trend = (
         df.groupby(["month", "product_model", "theme"])
@@ -719,6 +748,118 @@ def build_trend_table(df: pd.DataFrame) -> pd.DataFrame:
         .reset_index(name="count")
     )
     return trend
+
+
+# ---------------------------------------------------------------------------
+# 7. FAILURE PRIORITY / COMPONENT / INVESTIGATION HELPERS
+# ---------------------------------------------------------------------------
+_COMPONENT_HINTS = {
+    "Battery": ("battery", "low charge", "won't start", "wont start", "no start"),
+    "Starter": ("starter", "clicking", "crank", "cranking"),
+    "Alternator": ("alternator", "charging system", "not charging"),
+    "Brakes": ("brake", "braking", "rotor", "pad"),
+    "Engine": ("engine", "motor", "stall", "misfire", "rpm"),
+    "AC Compressor": ("compressor", "air conditioning", "a/c", "ac ", "cooling"),
+    "Cooling System": ("overheat", "overheating", "radiator", "coolant", "fan"),
+    "Fuel Pump": ("fuel pump", "fuel pressure", "fuel delivery"),
+    "Electrical": ("wiring", "fuse", "short circuit", "electrical", "power loss"),
+    "Display / Screen": ("screen", "display", "touchscreen"),
+}
+
+_SERIOUS_FAILURE_TERMS = (
+    "fire", "smoke", "crash", "accident", "brake failure", "brakes failed",
+    "stall", "overheat", "overheating", "leak", "unsafe", "injury",
+)
+
+
+def _likely_component(rows: pd.DataFrame) -> str:
+    if "component" in rows.columns:
+        known = rows["component"].fillna("").astype(str).str.strip()
+        known = known[~known.str.lower().isin({"", "unknown", "nan", "none"})]
+        if len(known):
+            return str(known.value_counts().idxmax())
+    text = " ".join(rows.get("symptom_text_clean", rows["symptom_text"])
+                    .fillna("").astype(str)).lower()
+    scores = {
+        component: sum(text.count(term) for term in terms)
+        for component, terms in _COMPONENT_HINTS.items()
+    }
+    best = max(scores, key=scores.get) if scores else None
+    return best if best and scores[best] else "Not identified"
+
+
+def build_failure_analysis(df: pd.DataFrame, trend: pd.DataFrame = None) -> dict:
+    """Return transparent, lightweight cluster-level decision support.
+
+    This is deliberately a heuristic, not a model confidence score.  The
+    returned values are safe to show beside the existing TF-IDF/KMeans output
+    and also work when optional columns are absent.
+    """
+    if df is None or df.empty:
+        return {}
+    total = len(df)
+    trend = trend if trend is not None else build_trend_table(df)
+    valid_dates = pd.to_datetime(df.get("date"), errors="coerce").notna().sum()
+    result = {}
+    for theme, rows in df.groupby("theme", sort=False):
+        count = len(rows)
+        pct = 100 * count / total if total else 0
+        text = " ".join(rows.get("symptom_text_clean", rows["symptom_text"])
+                        .fillna("").astype(str)).lower()
+        serious_hits = sum(text.count(term) for term in _SERIOUS_FAILURE_TERMS)
+        recent_change = None
+        if valid_dates and trend is not None and not trend.empty:
+            counts = trend[trend["theme"] == theme].groupby("month")["count"].sum()
+            if len(counts) >= 2:
+                midpoint = max(1, len(counts) // 2)
+                old, new = counts.iloc[:midpoint].sum(), counts.iloc[midpoint:].sum()
+                if old:
+                    recent_change = round(100 * (new - old) / old, 1)
+        if serious_hits or pct >= 35:
+            priority = "Critical"
+        elif pct >= 20 or (recent_change is not None and recent_change >= 50):
+            priority = "High"
+        elif pct >= 8 or (recent_change is not None and recent_change > 0):
+            priority = "Medium"
+        else:
+            priority = "Low"
+
+        symptoms = _select_representative_examples(
+            rows["symptom_text_clean"], n=3
+        ) if "symptom_text_clean" in rows else []
+        component = _likely_component(rows)
+        if recent_change is None:
+            trend_label = "Unavailable (no usable date trend)"
+        elif recent_change > 10:
+            trend_label = f"Increasing ({recent_change:+g}% recently)"
+        elif recent_change < -10:
+            trend_label = f"Decreasing ({recent_change:+g}% recently)"
+        else:
+            trend_label = "Stable"
+
+        cause = f"{component} may be contributing to the reported symptoms." \
+            if component != "Not identified" else \
+            "The available complaint text does not identify a clear component."
+        action = f"Inspect {component.lower()} and review related repair records." \
+            if component != "Not identified" else \
+            "Review representative complaints and collect component/repair details."
+        five_whys = [
+            f"Complaints report {str(theme).lower()} symptoms.",
+            f"The reported symptoms may involve {component.lower()}.",
+            "The component may be worn, disconnected, or out of specification.",
+            "A related upstream condition may be contributing to the failure.",
+            "Inspect the component and confirm the cause against repair evidence.",
+        ]
+        result[str(theme)] = {
+            "count": int(count), "pct_of_total": round(pct, 1),
+            "priority": priority, "component": component,
+            "trend": trend_label, "trend_change_pct": recent_change,
+            "symptoms": symptoms, "possible_root_cause": cause,
+            "recommended_action": action,
+            "five_whys": five_whys,
+            "temporal_analysis_available": bool(valid_dates and not trend.empty),
+        }
+    return result
 
 
 # ---------------------------------------------------------------------------

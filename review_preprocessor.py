@@ -42,7 +42,7 @@ import pandas as pd
 # ---------------------------------------------------------------------------
 # STRUCTURED-DATA DETECTION
 # ---------------------------------------------------------------------------
-REQUIRED_PIPELINE_COLUMNS = {"product_model", "date", "symptom_text"}
+REQUIRED_PIPELINE_COLUMNS = {"product_model", "symptom_text"}
 
 
 def is_structured_failure_data(df: pd.DataFrame) -> bool:
@@ -324,9 +324,8 @@ def preprocess_raw_reviews(df: pd.DataFrame, source_filename: str = "reviews"):
             if meta_cols["product_model"] else "Unknown"
         ),
         "date": (
-            pd.to_datetime(working[meta_cols["date"]], errors="coerce")
-            .fillna(pd.Timestamp(datetime.today().date())).values
-            if meta_cols["date"] else pd.Timestamp(datetime.today().date())
+            pd.to_datetime(working[meta_cols["date"]], errors="coerce").values
+            if meta_cols["date"] else pd.NaT
         ),
         "symptom_text": working["_clean_review"].values,
         "fix_text": "",
