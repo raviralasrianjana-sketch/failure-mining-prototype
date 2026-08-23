@@ -10,7 +10,7 @@ import chatbot
 from pipeline import run_pipeline_batch, build_insights, build_word_report
 
 st.set_page_config(
-    page_title="Field Returns Failure Mode Mining",
+    page_title="Failure Mining | AI-Powered Field Failure Analysis",
     page_icon="🔧",
     layout="wide",
 )
@@ -126,7 +126,11 @@ def do_logout():
 # SLIDE 0 - LOGIN / SIGN UP
 # ---------------------------------------------------------------------------
 def render_auth_page():
-    st.title("🔧 Field Returns Failure Mode Mining")
+    st.title("🔧 Failure Mining")
+    st.markdown(
+        "AI-powered failure analysis that turns field return and service "
+        "comments into actionable failure modes and component insights."
+    )
     st.caption("Sign in to continue -- a profile is created automatically the first time.")
 
     if not auth.is_configured():
@@ -303,93 +307,20 @@ def render_sidebar_profile():
 # ---------------------------------------------------------------------------
 # SLIDE 1 - FILE UPLOAD
 # ---------------------------------------------------------------------------
-def render_upload_page():
-    st.title("🔧 Field Returns Failure Mode Mining")
-    st.caption(
-        "Upload your service notes (CSV, Excel, PDF, Word, or an image/"
-        "screenshot) and click Analyze to start the failure mode analysis."
-    )
-
-    uploaded_files = st.file_uploader(
-        "📂 Upload your service notes files",
-        type=[
-            "csv",
-            "xlsx",
-            "xls",
-            "tsv",
-            "json",
-            "pdf",
-            "docx",
-            "png",
-            "jpg",
-            "jpeg",
-        ],
-        accept_multiple_files=True,
-        help=(
-            "You can select multiple CSV, Excel, TSV, JSON, PDF, Word, "
-            "or image files. All files are combined into one dataset and "
-            "analyzed together for consistent failure themes."
-        ),
-    )
-
-    st.caption(
-        "Supported input: ✓ Multiple structured Failure Mining datasets  "
-        "✓ Multiple raw customer/review files (CSV/XLSX, e.g. Google "
-        "Reviews exports) ✓ PDF/Word/image files — all uploaded files "
-        "are analyzed together."
-    )
-
-    auto_k = st.sidebar.checkbox(
-        "Auto-select number of themes",
-        value=True,
-    )
-
-    n_clusters = None
-
-    if not auto_k:
-        n_clusters = st.sidebar.slider(
-            "Number of themes (clusters)",
-            3,
-            12,
-            8,
-        )
-
-    if not uploaded_files:
-        st.info(
-            "Please upload one or more files "
-            "(CSV, Excel, PDF, Word, or image)."
-        )
-        return
-
-    st.success(f"{len(uploaded_files)} file(s) uploaded successfully.")
-
-    for uploaded_file in uploaded_files:
-        st.caption(f"• {uploaded_file.name}")
-
-    analyze = st.button(
-        "🔍 Analyze All Files",
-        type="primary",
-    )
-
-    if not analyze:
-        return
-
+def _run_analysis(file_items, n_clusters):
+    """
+    Runs the existing analyze -> report -> history pipeline for a batch of
+    (filename, bytes) tuples. Shared by both the file-upload CTA and the
+    demo-dataset CTA below, so there's exactly one code path that touches
+    load_and_process_batch()/build_insights()/build_word_report() --
+    nothing about the pipeline itself changes based on which CTA
+    triggered it.
+    """
     import traceback
 
     try:
-        # Read each upload once, then send the complete batch to the pipeline.
-        # This is the key performance improvement: TF-IDF and KMeans run ONCE
-        # over the combined dataset instead of once for every file.
-        file_items = tuple(
-            (
-                uploaded_file.name,
-                uploaded_file.getvalue(),
-            )
-            for uploaded_file in uploaded_files
-        )
-
         with st.spinner(
-            f"Analyzing {len(uploaded_files)} file(s): "
+            f"Analyzing {len(file_items)} file(s): "
             "loading → sanitizing → vectorizing → clustering → labeling..."
         ):
             (
@@ -471,6 +402,112 @@ def render_upload_page():
 
         with st.expander("Full error details"):
             st.code(traceback.format_exc())
+
+
+DEMO_DATA_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "data",
+    "service_notes.csv",
+)
+
+
+def render_upload_page():
+    st.title("🔧 Failure Mining")
+    st.markdown(
+        "AI-powered failure analysis that turns field return and service "
+        "comments into actionable failure modes and component insights."
+    )
+
+    st.subheader("Get started")
+    st.caption(
+        "Upload your service notes (CSV, Excel, PDF, Word, or an image/"
+        "screenshot) and click Analyze to start the failure mode analysis."
+    )
+
+    uploaded_files = st.file_uploader(
+        "📂 Upload your field returns data",
+        type=[
+            "csv",
+            "xlsx",
+            "xls",
+            "tsv",
+            "json",
+            "pdf",
+            "docx",
+            "png",
+            "jpg",
+            "jpeg",
+        ],
+        accept_multiple_files=True,
+        help=(
+            "You can select multiple CSV, Excel, TSV, JSON, PDF, Word, "
+            "or image files. All files are combined into one dataset and "
+            "analyzed together for consistent failure themes."
+        ),
+    )
+
+    st.caption(
+        "Supported input: ✓ Multiple structured Failure Mining datasets  "
+        "✓ Multiple raw customer/review files (CSV/XLSX, e.g. Google "
+        "Reviews exports) ✓ PDF/Word/image files — all uploaded files "
+        "are analyzed together."
+    )
+
+    auto_k = st.sidebar.checkbox(
+        "Auto-select number of themes",
+        value=True,
+    )
+
+    n_clusters = None
+
+    if not auto_k:
+        n_clusters = st.sidebar.slider(
+            "Number of themes (clusters)",
+            3,
+            12,
+            8,
+        )
+
+    has_demo_data = os.path.exists(DEMO_DATA_PATH)
+
+    if not uploaded_files:
+        st.info(
+            "Please upload one or more files "
+            "(CSV, Excel, PDF, Word, or image)."
+        )
+
+        if has_demo_data:
+            st.caption("No data handy? Try the built-in sample dataset instead.")
+            if st.button("🧪 Try the Demo Dataset"):
+                with open(DEMO_DATA_PATH, "rb") as f:
+                    demo_bytes = f.read()
+                demo_file_items = ((os.path.basename(DEMO_DATA_PATH), demo_bytes),)
+                _run_analysis(demo_file_items, n_clusters)
+
+        return
+
+    st.success(f"{len(uploaded_files)} file(s) uploaded successfully.")
+
+    for uploaded_file in uploaded_files:
+        st.caption(f"• {uploaded_file.name}")
+
+    analyze = st.button(
+        "🔍 Analyze All Files",
+        type="primary",
+    )
+
+    if not analyze:
+        return
+
+    file_items = tuple(
+        (
+            uploaded_file.name,
+            uploaded_file.getvalue(),
+        )
+        for uploaded_file in uploaded_files
+    )
+
+    _run_analysis(file_items, n_clusters)
 
 
 # ---------------------------------------------------------------------------
