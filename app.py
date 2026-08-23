@@ -7,11 +7,36 @@ import streamlit as st
 
 import auth
 import chatbot
-from pipeline import (
-    run_pipeline_batch,
-    build_insights,
-    build_word_report,
-    build_failure_analysis,
+import pipeline as failure_pipeline
+from pipeline import run_pipeline_batch, build_insights, build_word_report
+
+# Keep the app compatible with an older deployed pipeline.py while the
+# project files are being synced.  Without this guard, Streamlit fails during
+# import before it can display the actual application.
+def _compat_failure_analysis(df, trend=None):
+    if df is None or df.empty:
+        return {}
+    result = {}
+    for theme, rows in df.groupby("theme", sort=False):
+        result[str(theme)] = {
+            "count": int(len(rows)),
+            "pct_of_total": round(100 * len(rows) / len(df), 1),
+            "priority": "Medium",
+            "component": "Not identified",
+            "trend": "Unavailable",
+            "trend_change_pct": None,
+            "symptoms": rows.get("symptom_text_clean", rows["symptom_text"])
+            .dropna().astype(str).head(3).tolist(),
+            "possible_root_cause": "Not available in this pipeline version.",
+            "recommended_action": "Review the underlying complaints.",
+            "five_whys": ["Review the complaint evidence and repair records."],
+            "temporal_analysis_available": False,
+        }
+    return result
+
+
+build_failure_analysis = getattr(
+    failure_pipeline, "build_failure_analysis", _compat_failure_analysis
 )
 
 st.set_page_config(
@@ -968,7 +993,7 @@ def render_theme_overview():
 # SECTION 3 - Trend Over Time by Theme
 # ---------------------------------------------------------------------------
 def render_trend():
-    _, trend_f, _ = get_filtered_data()
+    filtered, trend_f, _ = get_filtered_data()
 
     back_button()
 
@@ -981,6 +1006,111 @@ def render_trend():
         color="theme",
         markers=True,
     )
+
+    # Anchor callouts to real Plotly coordinates, rather than placing a
+    # separate explanation below the chart.  This keeps the annotation tied
+    # to its point when the user changes the filters.
+    callouts = []
+    for theme, theme_trend in trend_f.groupby("theme"):
+        theme_trend = theme_trend.groupby("month", as_index=False)["count"].sum()
+        theme_trend = theme_trend.sort_values("month")
+        if len(theme_trend) < 2:
+            continue
+        theme_trend["change_pct"] = (
+            theme_trend["count"].pct_change() * 100
+        )
+        candidates = theme_trend[
+            theme_trend["change_pct"].notna()
+            & (theme_trend["change_pct"] >= 25)
+        ]
+        if len(candidates):
+            point = candidates.sort_values(
+                ["change_pct", "month"], ascending=[False, False]
+            ).iloc[0]
+            callouts.append((theme, point))
+
+    if callouts:
+        callouts = sorted(
+            callouts,
+            key=lambda item: item[1]["change_pct"],
+            reverse=True,
+        )[:4]
+        marker_x = [point["month"] for _, point in callouts]
+        marker_y = [point["count"] for _, point in callouts]
+        customdata = []
+        for theme, point in callouts:
+            component = build_failure_analysis(
+                filtered[filtered["theme"] == theme],
+                trend_f,
+            ).get(theme, {}).get("component", "Not identified")
+            customdata.append([
+                point["month"],
+                theme,
+                int(point["count"]),
+                f"{point['change_pct']:+.1f}%",
+                component,
+            ])
+
+        fig_line.add_scatter(
+            x=marker_x,
+            y=marker_y,
+            mode="markers",
+            name="Emerging issue",
+            customdata=customdata,
+            hovertemplate=(
+                "<b>🚨 Emerging Issue</b><br>"
+                "Period: %{customdata[0]}<br>"
+                "Failure pattern: %{customdata[1]}<br>"
+                "Complaints: %{customdata[2]}<br>"
+                "Change: %{customdata[3]}<br>"
+                "Likely component: %{customdata[4]}<extra></extra>"
+            ),
+            marker=dict(
+                size=15,
+                color="#FFB000",
+                line=dict(color="#081420", width=2),
+                symbol="diamond",
+            ),
+        )
+
+        for theme, point in callouts:
+            component = build_failure_analysis(
+                filtered[filtered["theme"] == theme],
+                trend_f,
+            ).get(theme, {}).get("component", "Not identified")
+            fig_line.add_annotation(
+                x=point["month"],
+                y=point["count"],
+                xref="x",
+                yref="y",
+                text=(
+                    f"🚨 Emerging Issue<br>"
+                    f"<b>{point['month']}</b> · {theme}<br>"
+                    f"{int(point['count'])} complaints · "
+                    f"{point['change_pct']:+.1f}% vs prior period<br>"
+                    f"Likely component: {component}"
+                ),
+                showarrow=True,
+                arrowhead=2,
+                arrowsize=1,
+                arrowwidth=1.5,
+                ax=45,
+                ay=-75,
+                bgcolor="rgba(8,20,32,0.94)",
+                bordercolor="#FFB000",
+                borderwidth=1,
+                font=dict(color="#EAF4F2", size=11),
+            )
+    elif trend_f.empty:
+        st.info(
+            "Emerging-issue annotations are unavailable because the uploaded "
+            "data has no usable date values."
+        )
+    else:
+        st.caption(
+            "No period increased by at least 25% versus the previous available "
+            "period in the current filtered view."
+        )
 
     fig_line.update_layout(
         height=480,
