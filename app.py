@@ -58,7 +58,7 @@ SECTIONS = [
 SECTION_KEYS = {s["key"] for s in SECTIONS}
 
 
-def inject_auth_theme():
+def inject_global_theme():
     """Dark navy / teal 'failure mining' theme for the sign-in screen only.
 
     Restyles Streamlit's own widgets (inputs, buttons, tabs, bordered
@@ -215,6 +215,45 @@ def inject_auth_theme():
         div[data-testid="stVerticalBlockBorderWrapper"] summary{
             color:var(--fm-ink-dim) !important;
         }
+
+        /* --- file uploader: square drop zone --- */
+        [data-testid="stFileUploaderDropzone"],
+        [data-testid="stFileUploader"] section{
+            aspect-ratio:1 / 1;
+            width:100%;
+            max-width:340px;
+            margin:0 auto;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            background:linear-gradient(180deg, rgba(14,34,51,0.94), rgba(8,20,32,0.96)) !important;
+            border:1.5px dashed var(--fm-line) !important;
+            border-radius:16px !important;
+            box-shadow:0 30px 80px -20px rgba(0,0,0,0.5);
+            transition:border-color .18s ease, box-shadow .18s ease;
+        }
+        [data-testid="stFileUploaderDropzone"]:hover,
+        [data-testid="stFileUploader"] section:hover{
+            border-color:var(--fm-teal-dim) !important;
+            box-shadow:0 0 0 3px rgba(47,224,196,0.12);
+        }
+        [data-testid="stFileUploaderDropzone"] *,
+        [data-testid="stFileUploader"] section *{
+            color:var(--fm-ink) !important;
+        }
+        [data-testid="stFileUploaderDropzoneInstructions"] svg,
+        [data-testid="stFileUploader"] section svg{
+            fill:var(--fm-teal) !important;
+        }
+        [data-testid="stFileUploaderDropzone"] button,
+        [data-testid="stFileUploader"] section button{
+            background:linear-gradient(180deg, #37EAD0, #1FB39C) !important;
+            color:#052420 !important;
+            font-weight:700 !important;
+            border:none !important;
+            border-radius:8px !important;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -311,8 +350,6 @@ def do_logout():
 # SLIDE 0 - LOGIN / SIGN UP
 # ---------------------------------------------------------------------------
 def render_auth_page():
-    inject_auth_theme()
-
     pitch_col, card_col = st.columns([1.1, 1], gap="large")
 
     with pitch_col:
@@ -1262,6 +1299,8 @@ def render_history():
 # ---------------------------------------------------------------------------
 # ROUTER
 # ---------------------------------------------------------------------------
+inject_global_theme()
+
 if st.session_state.page == "reset_password":
     render_reset_password_page()
 
