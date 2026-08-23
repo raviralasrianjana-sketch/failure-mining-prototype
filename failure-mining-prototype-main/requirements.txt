@@ -1,0 +1,10 @@
+streamlit
+pandas
+plotly
+scikit-learn
+python-docx
+openpyxl
+groq
+supabase
+pdfplumber
+matplotlib
