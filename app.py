@@ -10,7 +10,7 @@ import chatbot
 from pipeline import run_pipeline_batch, build_insights, build_word_report
 
 st.set_page_config(
-    page_title="Failure Mining | AI-Powered Field Failure Analysis",
+    page_title="Field Returns Failure Mode Mining",
     page_icon="🔧",
     layout="wide",
 )
@@ -56,6 +56,191 @@ SECTIONS = [
     {"key": "ai_assistant", "icon": "🤖", "label": "Failure Mining AI Assistant (Chat)"},
 ]
 SECTION_KEYS = {s["key"] for s in SECTIONS}
+
+
+def inject_auth_theme():
+    """Dark navy / teal 'failure mining' theme for the sign-in screen only.
+
+    Restyles Streamlit's own widgets (inputs, buttons, tabs, bordered
+    containers) via CSS instead of replacing them with raw HTML, so the
+    real st.form / auth.login_user() flow keeps working exactly as before.
+    """
+    st.markdown(
+        """
+        <style>
+        :root{
+            --fm-navy-deep:#081420;
+            --fm-teal:#2FE0C4;
+            --fm-teal-dim:#1B7F71;
+            --fm-teal-glow:rgba(47,224,196,0.55);
+            --fm-ink:#EAF4F2;
+            --fm-ink-dim:#8FA9AC;
+            --fm-line:rgba(143,169,172,0.25);
+        }
+
+        /* --- page background: static low-poly network, no JS needed --- */
+        [data-testid="stAppViewContainer"], .stApp{
+            background-color:var(--fm-navy-deep);
+            background-image:
+                radial-gradient(ellipse at 20% 15%, #0F2C3F 0%, transparent 55%),
+                radial-gradient(ellipse at 85% 90%, #0C2131 0%, transparent 50%),
+                url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'>\
+<g fill='none' stroke='%232FE0C4' stroke-opacity='0.14'>\
+<polygon points='60,40 220,120 90,220'/>\
+<polygon points='700,60 860,150 760,260'/>\
+<polygon points='120,600 300,520 260,720'/>\
+<polygon points='640,560 820,640 660,780'/>\
+<line x1='60' y1='40' x2='700' y2='60'/>\
+<line x1='90' y1='220' x2='260' y2='720'/>\
+<line x1='760' y1='260' x2='660' y2='780'/>\
+</g>\
+<g fill='%232FE0C4' fill-opacity='0.5'>\
+<circle cx='60' cy='40' r='3'/><circle cx='220' cy='120' r='2.5'/>\
+<circle cx='90' cy='220' r='3'/><circle cx='700' cy='60' r='2.5'/>\
+<circle cx='860' cy='150' r='3'/><circle cx='760' cy='260' r='2.5'/>\
+<circle cx='120' cy='600' r='3'/><circle cx='300' cy='520' r='2.5'/>\
+<circle cx='260' cy='720' r='3'/><circle cx='640' cy='560' r='2.5'/>\
+<circle cx='820' cy='640' r='3'/><circle cx='660' cy='780' r='2.5'/>\
+</g></svg>");
+            background-repeat:repeat;
+            background-size:900px 900px, 900px 900px, 900px 900px;
+        }
+
+        [data-testid="stHeader"]{ background:transparent; }
+
+        /* --- headings / captions on the auth page --- */
+        #fm-eyebrow{
+            font-family:'Courier New', monospace;
+            font-size:1.05rem;
+            letter-spacing:0.16em;
+            text-transform:uppercase;
+            color:var(--fm-teal);
+            font-weight:700;
+            margin-bottom:0.6rem;
+        }
+        #fm-title{
+            font-size:3.1rem;
+            font-weight:750;
+            color:var(--fm-ink);
+            letter-spacing:-0.01em;
+            margin:0 0 0.7rem 0;
+            line-height:1.15;
+        }
+        #fm-tagline{
+            font-size:1.4rem;
+            font-weight:650;
+            color:var(--fm-teal);
+            margin:0 0 1.1rem 0;
+        }
+        #fm-sub{
+            font-size:1.25rem;
+            color:var(--fm-ink-dim);
+            line-height:1.6;
+            max-width:560px;
+        }
+        #fm-points div{
+            display:flex;
+            align-items:center;
+            gap:0.7rem;
+            font-size:1.2rem;
+            color:var(--fm-ink);
+            margin-top:1.3rem;
+        }
+
+        /* --- the sign-in card itself: Streamlit's bordered container --- */
+        div[data-testid="stVerticalBlockBorderWrapper"]{
+            background:linear-gradient(180deg, rgba(14,34,51,0.94), rgba(8,20,32,0.96));
+            border:1px solid var(--fm-line) !important;
+            border-radius:16px !important;
+            box-shadow:0 30px 80px -20px rgba(0,0,0,0.65);
+            padding:0.5rem 0.25rem;
+        }
+
+        /* text/captions inside the card */
+        div[data-testid="stVerticalBlockBorderWrapper"] p,
+        div[data-testid="stVerticalBlockBorderWrapper"] label,
+        div[data-testid="stVerticalBlockBorderWrapper"] span{
+            color:var(--fm-ink) !important;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stCaptionContainer"]{
+            color:var(--fm-ink-dim) !important;
+        }
+
+        /* inputs */
+        div[data-testid="stVerticalBlockBorderWrapper"] input{
+            background:rgba(255,255,255,0.03) !important;
+            border:1px solid var(--fm-line) !important;
+            border-radius:8px !important;
+            color:var(--fm-ink) !important;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"] input:focus{
+            border-color:var(--fm-teal-dim) !important;
+            box-shadow:0 0 0 3px rgba(47,224,196,0.15) !important;
+        }
+
+        /* tabs (Log In / Sign Up) */
+        div[data-testid="stVerticalBlockBorderWrapper"] [data-baseweb="tab-list"]{
+            background:rgba(255,255,255,0.03);
+            border-radius:8px;
+            gap:0;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"] [data-baseweb="tab"]{
+            color:var(--fm-ink-dim) !important;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"] [aria-selected="true"]{
+            color:var(--fm-teal) !important;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"] [data-baseweb="tab-highlight"]{
+            background-color:var(--fm-teal) !important;
+        }
+
+        /* primary buttons (Log In / Create Account / form submits) */
+        div[data-testid="stVerticalBlockBorderWrapper"] button[kind="primary"],
+        div[data-testid="stVerticalBlockBorderWrapper"] button[kind="primaryFormSubmit"]{
+            background:linear-gradient(180deg, #37EAD0, #1FB39C) !important;
+            color:#052420 !important;
+            font-weight:700 !important;
+            border:none !important;
+            border-radius:8px !important;
+            box-shadow:0 8px 24px -8px rgba(47,224,196,0.5);
+        }
+
+        /* expander ("Forgot password?") */
+        div[data-testid="stVerticalBlockBorderWrapper"] details{
+            border:1px solid var(--fm-line) !important;
+            border-radius:8px !important;
+            background:rgba(255,255,255,0.02) !important;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"] summary{
+            color:var(--fm-ink-dim) !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_auth_pitch():
+    """Left-hand marketing copy shown next to the sign-in card."""
+    st.markdown(
+        """
+        <div style="display:flex; flex-direction:column;
+                    justify-content:center; min-height:78vh;">
+        <div id="fm-eyebrow">&#128269; FAILURE MINING</div>
+        <div id="fm-title">AI-Powered Field Failure Analysis</div>
+        <div id="fm-tagline">Field Returns Failure Mode Mining</div>
+        <div id="fm-sub">Turn messy service-return comments into actionable
+        failure modes and component insights.</div>
+        <div id="fm-points">
+            <div>&#128737;&#65039; PII automatically redacted before analysis</div>
+            <div>&#9201;&#65039; Themes and trends in minutes, not days</div>
+            <div>&#128190; Every analysis saved to your history</div>
+        </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def inject_icon_css():
@@ -126,121 +311,132 @@ def do_logout():
 # SLIDE 0 - LOGIN / SIGN UP
 # ---------------------------------------------------------------------------
 def render_auth_page():
-    st.title("🔧 Failure Mining")
-    st.markdown(
-        "AI-powered failure analysis that turns field return and service "
-        "comments into actionable failure modes and component insights."
-    )
-    st.caption("Sign in to continue -- a profile is created automatically the first time.")
+    inject_auth_theme()
 
-    if not auth.is_configured():
-        st.error(
-            "Supabase Auth isn't configured yet. Add `SUPABASE_URL` and "
-            "`SUPABASE_ANON_KEY` to `.streamlit/secrets.toml` -- see "
-            "README.md -> 'Setting up Supabase Auth'."
-        )
-        return
+    pitch_col, card_col = st.columns([1.1, 1], gap="large")
 
-    # --- Continue with Google -------------------------------------------
-    _google_error = st.session_state.pop("google_auth_error", None)
-    if _google_error:
-        st.error(
-            f"Google sign-in didn't complete: {_google_error}\n\n"
-            "This is almost always a redirect-URL mismatch, not a bug in "
-            "this app -- double check: (1) `APP_URL` in secrets matches a "
-            "URL listed under Supabase -> Authentication -> URL "
-            "Configuration -> Redirect URLs, and (2) in Google Cloud "
-            "Console, the OAuth client's Authorized redirect URI is "
-            "Supabase's own callback (`https://<project-ref>.supabase.co/"
-            "auth/v1/callback`) -- not this app's URL."
-        )
+    with pitch_col:
+        render_auth_pitch()
 
-    if _google_error:
-        st.session_state.pop("google_login_url", None)
-        st.session_state.pop("pkce_code_verifier", None)
-
-    try:
-        if "google_login_url" not in st.session_state:
-            st.session_state.google_login_url = auth.get_google_login_url()
-        google_url = st.session_state.google_login_url
-
-        # Use one plain anchor without target="_blank" so OAuth starts in the
-        # current browser tab. Avoid st.link_button(), which opens a new tab.
-        st.markdown(
-            f'<a href="{google_url}" style="display:block;text-align:center;'
-            f"background:#ff4b4b;color:white;padding:0.6rem 1rem;"
-            f"border-radius:0.35rem;text-decoration:none;font-weight:600;"
-            f'">🔵 Continue with Google</a>',
-            unsafe_allow_html=True,
-        )
-    except Exception as e:
-        st.error(f"Google sign-in isn't set up yet: {e}")
-
-    st.divider()
-
-    tab_login, tab_signup = st.tabs(["🔑 Log In", "🆕 Sign Up"])
-
-    with tab_login:
-        with st.form("login_form"):
-            email = st.text_input("Email", key="login_email")
-            password = st.text_input(
-                "Password",
-                type="password",
-                key="login_password",
+    with card_col:
+        with st.container(border=True):
+            st.markdown("#### Welcome back")
+            st.caption(
+                "Sign in to continue -- a profile is created automatically "
+                "the first time."
             )
-            submitted = st.form_submit_button("Log In", type="primary")
 
-        if submitted:
-            user, msg = auth.login_user(email, password)
-            if user:
-                st.session_state.user = user
-                st.session_state.page = "upload"
-                st.rerun()
-            else:
-                st.error(msg)
-
-        with st.expander("Forgot password?"):
-            with st.form("forgot_password_form"):
-                reset_email = st.text_input(
-                    "Enter your account email",
-                    key="reset_email",
+            if not auth.is_configured():
+                st.error(
+                    "Supabase Auth isn't configured yet. Add `SUPABASE_URL` "
+                    "and `SUPABASE_ANON_KEY` to `.streamlit/secrets.toml` "
+                    "-- see README.md -> 'Setting up Supabase Auth'."
                 )
-                reset_submitted = st.form_submit_button("Send reset link")
+                return
 
-            if reset_submitted:
-                ok, msg = auth.request_password_reset(reset_email)
-                (st.success if ok else st.error)(msg)
+            # --- Continue with Google ---------------------------------
+            _google_error = st.session_state.pop("google_auth_error", None)
+            if _google_error:
+                st.error(
+                    f"Google sign-in didn't complete: {_google_error}\n\n"
+                    "This is almost always a redirect-URL mismatch, not a "
+                    "bug in this app -- double check: (1) `APP_URL` in "
+                    "secrets matches a URL listed under Supabase -> "
+                    "Authentication -> URL Configuration -> Redirect URLs, "
+                    "and (2) in Google Cloud Console, the OAuth client's "
+                    "Authorized redirect URI is Supabase's own callback "
+                    "(`https://<project-ref>.supabase.co/auth/v1/callback`) "
+                    "-- not this app's URL."
+                )
 
-    with tab_signup:
-        st.caption(
-            "Creates your account with Supabase -- use a real email, "
-            "you'll need it to confirm/recover."
-        )
+            if _google_error:
+                st.session_state.pop("google_login_url", None)
+                st.session_state.pop("pkce_code_verifier", None)
 
-        with st.form("signup_form"):
-            name = st.text_input("Full name", key="signup_name")
-            email = st.text_input("Email", key="signup_email")
-            password = st.text_input(
-                "Password (min 6 characters)",
-                type="password",
-                key="signup_password",
-            )
-            submitted = st.form_submit_button(
-                "Create Account",
-                type="primary",
-            )
+            try:
+                if "google_login_url" not in st.session_state:
+                    st.session_state.google_login_url = auth.get_google_login_url()
+                google_url = st.session_state.google_login_url
 
-        if submitted:
-            ok, msg = auth.signup_user(email, password, name)
+                # Use one plain anchor without target="_blank" so OAuth
+                # starts in the current browser tab. Avoid st.link_button(),
+                # which opens a new tab.
+                st.markdown(
+                    f'<a href="{google_url}" style="display:block;'
+                    f"text-align:center;background:linear-gradient(180deg,"
+                    f"#37EAD0,#1FB39C);color:#052420;padding:0.6rem 1rem;"
+                    f"border-radius:0.5rem;text-decoration:none;"
+                    f'font-weight:700;">🔵 Continue with Google</a>',
+                    unsafe_allow_html=True,
+                )
+            except Exception as e:
+                st.error(f"Google sign-in isn't set up yet: {e}")
 
-            if ok:
-                if "user" in st.session_state:
-                    st.session_state.page = "upload"
-                    st.rerun()
-                else:
-                    st.success(msg)
-            else:
-                st.error(msg)
+            st.divider()
+
+            tab_login, tab_signup = st.tabs(["🔑 Log In", "🆕 Sign Up"])
+
+            with tab_login:
+                with st.form("login_form"):
+                    email = st.text_input("Email", key="login_email")
+                    password = st.text_input(
+                        "Password",
+                        type="password",
+                        key="login_password",
+                    )
+                    submitted = st.form_submit_button("Log In", type="primary")
+
+                if submitted:
+                    user, msg = auth.login_user(email, password)
+                    if user:
+                        st.session_state.user = user
+                        st.session_state.page = "upload"
+                        st.rerun()
+                    else:
+                        st.error(msg)
+
+                with st.expander("Forgot password?"):
+                    with st.form("forgot_password_form"):
+                        reset_email = st.text_input(
+                            "Enter your account email",
+                            key="reset_email",
+                        )
+                        reset_submitted = st.form_submit_button("Send reset link")
+
+                    if reset_submitted:
+                        ok, msg = auth.request_password_reset(reset_email)
+                        (st.success if ok else st.error)(msg)
+
+            with tab_signup:
+                st.caption(
+                    "Creates your account with Supabase -- use a real "
+                    "email, you'll need it to confirm/recover."
+                )
+
+                with st.form("signup_form"):
+                    name = st.text_input("Full name", key="signup_name")
+                    email = st.text_input("Email", key="signup_email")
+                    password = st.text_input(
+                        "Password (min 6 characters)",
+                        type="password",
+                        key="signup_password",
+                    )
+                    submitted = st.form_submit_button(
+                        "Create Account",
+                        type="primary",
+                    )
+
+                if submitted:
+                    ok, msg = auth.signup_user(email, password, name)
+
+                    if ok:
+                        if "user" in st.session_state:
+                            st.session_state.page = "upload"
+                            st.rerun()
+                        else:
+                            st.success(msg)
+                    else:
+                        st.error(msg)
 
 
 def render_reset_password_page():
@@ -307,20 +503,93 @@ def render_sidebar_profile():
 # ---------------------------------------------------------------------------
 # SLIDE 1 - FILE UPLOAD
 # ---------------------------------------------------------------------------
-def _run_analysis(file_items, n_clusters):
-    """
-    Runs the existing analyze -> report -> history pipeline for a batch of
-    (filename, bytes) tuples. Shared by both the file-upload CTA and the
-    demo-dataset CTA below, so there's exactly one code path that touches
-    load_and_process_batch()/build_insights()/build_word_report() --
-    nothing about the pipeline itself changes based on which CTA
-    triggered it.
-    """
+def render_upload_page():
+    st.title("🔧 Field Returns Failure Mode Mining")
+    st.caption(
+        "Upload your service notes (CSV, Excel, PDF, Word, or an image/"
+        "screenshot) and click Analyze to start the failure mode analysis."
+    )
+
+    uploaded_files = st.file_uploader(
+        "📂 Upload your service notes files",
+        type=[
+            "csv",
+            "xlsx",
+            "xls",
+            "tsv",
+            "json",
+            "pdf",
+            "docx",
+            "png",
+            "jpg",
+            "jpeg",
+        ],
+        accept_multiple_files=True,
+        help=(
+            "You can select multiple CSV, Excel, TSV, JSON, PDF, Word, "
+            "or image files. All files are combined into one dataset and "
+            "analyzed together for consistent failure themes."
+        ),
+    )
+
+    st.caption(
+        "Supported input: ✓ Multiple structured Failure Mining datasets  "
+        "✓ Multiple raw customer/review files (CSV/XLSX, e.g. Google "
+        "Reviews exports) ✓ PDF/Word/image files — all uploaded files "
+        "are analyzed together."
+    )
+
+    auto_k = st.sidebar.checkbox(
+        "Auto-select number of themes",
+        value=True,
+    )
+
+    n_clusters = None
+
+    if not auto_k:
+        n_clusters = st.sidebar.slider(
+            "Number of themes (clusters)",
+            3,
+            12,
+            8,
+        )
+
+    if not uploaded_files:
+        st.info(
+            "Please upload one or more files "
+            "(CSV, Excel, PDF, Word, or image)."
+        )
+        return
+
+    st.success(f"{len(uploaded_files)} file(s) uploaded successfully.")
+
+    for uploaded_file in uploaded_files:
+        st.caption(f"• {uploaded_file.name}")
+
+    analyze = st.button(
+        "🔍 Analyze All Files",
+        type="primary",
+    )
+
+    if not analyze:
+        return
+
     import traceback
 
     try:
+        # Read each upload once, then send the complete batch to the pipeline.
+        # This is the key performance improvement: TF-IDF and KMeans run ONCE
+        # over the combined dataset instead of once for every file.
+        file_items = tuple(
+            (
+                uploaded_file.name,
+                uploaded_file.getvalue(),
+            )
+            for uploaded_file in uploaded_files
+        )
+
         with st.spinner(
-            f"Analyzing {len(file_items)} file(s): "
+            f"Analyzing {len(uploaded_files)} file(s): "
             "loading → sanitizing → vectorizing → clustering → labeling..."
         ):
             (
@@ -402,112 +671,6 @@ def _run_analysis(file_items, n_clusters):
 
         with st.expander("Full error details"):
             st.code(traceback.format_exc())
-
-
-DEMO_DATA_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "data",
-    "service_notes.csv",
-)
-
-
-def render_upload_page():
-    st.title("🔧 Failure Mining")
-    st.markdown(
-        "AI-powered failure analysis that turns field return and service "
-        "comments into actionable failure modes and component insights."
-    )
-
-    st.subheader("Get started")
-    st.caption(
-        "Upload your service notes (CSV, Excel, PDF, Word, or an image/"
-        "screenshot) and click Analyze to start the failure mode analysis."
-    )
-
-    uploaded_files = st.file_uploader(
-        "📂 Upload your field returns data",
-        type=[
-            "csv",
-            "xlsx",
-            "xls",
-            "tsv",
-            "json",
-            "pdf",
-            "docx",
-            "png",
-            "jpg",
-            "jpeg",
-        ],
-        accept_multiple_files=True,
-        help=(
-            "You can select multiple CSV, Excel, TSV, JSON, PDF, Word, "
-            "or image files. All files are combined into one dataset and "
-            "analyzed together for consistent failure themes."
-        ),
-    )
-
-    st.caption(
-        "Supported input: ✓ Multiple structured Failure Mining datasets  "
-        "✓ Multiple raw customer/review files (CSV/XLSX, e.g. Google "
-        "Reviews exports) ✓ PDF/Word/image files — all uploaded files "
-        "are analyzed together."
-    )
-
-    auto_k = st.sidebar.checkbox(
-        "Auto-select number of themes",
-        value=True,
-    )
-
-    n_clusters = None
-
-    if not auto_k:
-        n_clusters = st.sidebar.slider(
-            "Number of themes (clusters)",
-            3,
-            12,
-            8,
-        )
-
-    has_demo_data = os.path.exists(DEMO_DATA_PATH)
-
-    if not uploaded_files:
-        st.info(
-            "Please upload one or more files "
-            "(CSV, Excel, PDF, Word, or image)."
-        )
-
-        if has_demo_data:
-            st.caption("No data handy? Try the built-in sample dataset instead.")
-            if st.button("🧪 Try the Demo Dataset"):
-                with open(DEMO_DATA_PATH, "rb") as f:
-                    demo_bytes = f.read()
-                demo_file_items = ((os.path.basename(DEMO_DATA_PATH), demo_bytes),)
-                _run_analysis(demo_file_items, n_clusters)
-
-        return
-
-    st.success(f"{len(uploaded_files)} file(s) uploaded successfully.")
-
-    for uploaded_file in uploaded_files:
-        st.caption(f"• {uploaded_file.name}")
-
-    analyze = st.button(
-        "🔍 Analyze All Files",
-        type="primary",
-    )
-
-    if not analyze:
-        return
-
-    file_items = tuple(
-        (
-            uploaded_file.name,
-            uploaded_file.getvalue(),
-        )
-        for uploaded_file in uploaded_files
-    )
-
-    _run_analysis(file_items, n_clusters)
 
 
 # ---------------------------------------------------------------------------
