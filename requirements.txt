@@ -8,3 +8,6 @@ groq
 supabase
 pdfplumber
 matplotlib
+Pillow
+pytesseract
+numpy

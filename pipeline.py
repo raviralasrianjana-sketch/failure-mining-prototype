@@ -76,29 +76,104 @@ def extract_text_from_docx(path_or_buffer) -> str:
 
 def extract_text_from_image(path_or_buffer) -> str:
     """
-    OCR (Optical Character Recognition): reads the pixels of an image and
-    recognizes any text in it -- this is how we handle scanned notes or
-    screenshots. Uses Tesseract OCR under the hood via pytesseract.
+    OCR for images (PNG, JPG, JPEG, WEBP, BMP, TIFF, GIF).
 
-    IMPORTANT: pytesseract is just a Python wrapper -- it needs the actual
-    Tesseract OCR *program* installed separately on the computer (it's not
-    something pip can install by itself). If it's missing, we raise a
-    clear error telling the user how to fix it, instead of a cryptic crash.
+    Strategy (tries each approach in order):
+    1. pytesseract  -- works if Tesseract is installed on the host OS.
+                       Always available on a local machine; NOT on
+                       Streamlit Cloud (no system package).
+    2. Groq vision  -- uses the llava / llama-vision model via the Groq
+                       API to describe / transcribe the image.  Works on
+                       Streamlit Cloud as long as GROQ_API_KEY is set.
+    3. Hard error   -- both methods failed; tell the user why.
     """
-    import pytesseract
+    import base64
+    import io as _io
     from PIL import Image
+
+    # --- normalise the buffer so we can rewind it as needed ---
+    if hasattr(path_or_buffer, "seek"):
+        path_or_buffer.seek(0)
+
     image = Image.open(path_or_buffer)
+
+    # Convert to RGB so we can always save as JPEG (avoids palette/RGBA issues)
+    if image.mode not in ("RGB", "L"):
+        image = image.convert("RGB")
+
+    # --- attempt 1: pytesseract (local / Linux with tesseract-ocr installed) ---
     try:
-        return pytesseract.image_to_string(image)
-    except pytesseract.TesseractNotFoundError:
-        raise ValueError(
-            "Image text reading needs the Tesseract OCR program installed "
-            "on this computer (separate from the Python packages). "
-            "On Windows: download and install it from "
-            "https://github.com/UB-Mannheim/tesseract/wiki, then restart "
-            "the app. On Mac: run 'brew install tesseract'. On Linux: run "
-            "'sudo apt install tesseract-ocr'."
-        )
+        import pytesseract
+        text = pytesseract.image_to_string(image)
+        if text.strip():
+            return text
+    except Exception:
+        pass  # Tesseract not installed or returned nothing useful — fall through
+
+    # --- attempt 2: Groq vision API ---
+    groq_key = os.environ.get("GROQ_API_KEY") or ""
+    try:
+        import streamlit as _st
+        if not groq_key:
+            groq_key = _st.secrets.get("GROQ_API_KEY", "")
+    except Exception:
+        pass
+
+    if groq_key:
+        try:
+            import groq as _groq
+
+            # Re-encode image as JPEG bytes → base64
+            buf = _io.BytesIO()
+            image.save(buf, format="JPEG", quality=85)
+            b64 = base64.b64encode(buf.getvalue()).decode()
+
+            client = _groq.Groq(api_key=groq_key)
+            response = client.chat.completions.create(
+                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{b64}"
+                                },
+                            },
+                            {
+                                "type": "text",
+                                "text": (
+                                    "This image contains service / field-return notes. "
+                                    "Please transcribe ALL visible text exactly as written, "
+                                    "preserving line breaks. Output only the transcribed text, "
+                                    "nothing else."
+                                ),
+                            },
+                        ],
+                    }
+                ],
+                max_tokens=2048,
+            )
+            text = response.choices[0].message.content or ""
+            if text.strip():
+                return text
+        except Exception as groq_err:
+            raise ValueError(
+                f"Image OCR via Groq vision failed: {groq_err}. "
+                "Make sure GROQ_API_KEY is set in your Streamlit secrets and "
+                "the model supports vision."
+            )
+
+    # --- attempt 3: nothing worked ---
+    raise ValueError(
+        "Could not extract text from the image. On Streamlit Cloud, set "
+        "GROQ_API_KEY in your app secrets to enable vision-based OCR. "
+        "Locally, install Tesseract: "
+        "Windows → https://github.com/UB-Mannheim/tesseract/wiki  "
+        "Mac → brew install tesseract  "
+        "Linux → sudo apt install tesseract-ocr"
+    )
 
 
 def extract_text_from_plain_file(path_or_buffer) -> str:
