@@ -30,6 +30,7 @@ labeling, trends) stays the same. That's a good "future work" slide!
 
 import re
 import io
+import os
 from datetime import datetime
 
 import numpy as np
@@ -98,6 +99,21 @@ def extract_text_from_image(path_or_buffer) -> str:
             "the app. On Mac: run 'brew install tesseract'. On Linux: run "
             "'sudo apt install tesseract-ocr'."
         )
+
+
+def extract_text_from_plain_file(path_or_buffer) -> str:
+    """Read a text export without assuming a particular text encoding."""
+    if hasattr(path_or_buffer, "seek"):
+        path_or_buffer.seek(0)
+    raw = path_or_buffer.read() if hasattr(path_or_buffer, "read") else open(path_or_buffer, "rb").read()
+    if isinstance(raw, str):
+        return raw
+    for encoding in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
+        try:
+            return raw.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return raw.decode("utf-8", errors="replace")
 
 
 # Regex patterns used to spot labeled fields inside freeform text, e.g.
@@ -223,7 +239,7 @@ def load_data(path_or_buffer, filename: str = None) -> pd.DataFrame:
             path_or_buffer doesn't carry a reliable extension on its own
             (e.g. a temp file already renamed to .csv).
     """
-    name = filename or getattr(path_or_buffer, "name", None) or str(path_or_buffer)
+    name = os.path.basename(filename or getattr(path_or_buffer, "name", None) or str(path_or_buffer))
     ext = name.lower().rsplit(".", 1)[-1] if "." in name else ""
 
     # detection_info is only ever set for the CSV/Excel/TSV/JSON branch,
@@ -233,7 +249,13 @@ def load_data(path_or_buffer, filename: str = None) -> pd.DataFrame:
     # that already matched the existing structured/PDF/DOCX/image paths.
     detection_info = None
 
-    if ext in ("xlsx", "xls", "xlsm"):
+    # Streamlit uploads and BytesIO objects are sometimes reused after a
+    # reader has consumed them.  Always rewind before handing them to a
+    # format-specific reader.
+    if hasattr(path_or_buffer, "seek"):
+        path_or_buffer.seek(0)
+
+    if ext in ("xlsx", "xls", "xlsm", "ods"):
         df = pd.read_excel(path_or_buffer)
         df, detection_info = _route_structured_or_reviews(df, name)
     elif ext == "tsv":
@@ -251,9 +273,27 @@ def load_data(path_or_buffer, filename: str = None) -> pd.DataFrame:
     elif ext in ("png", "jpg", "jpeg"):
         raw_text = extract_text_from_image(path_or_buffer)
         df = parse_freeform_text_to_notes(raw_text, source_filename=name)
+    elif ext in ("webp", "gif", "bmp", "tif", "tiff"):
+        raw_text = extract_text_from_image(path_or_buffer)
+        df = parse_freeform_text_to_notes(raw_text, source_filename=name)
+    elif ext in ("txt", "md", "log"):
+        raw_text = extract_text_from_plain_file(path_or_buffer)
+        df = parse_freeform_text_to_notes(raw_text, source_filename=name)
     else:
-        # Default: assume CSV (also covers .csv and unknown extensions)
-        df = pd.read_csv(path_or_buffer)
+        # CSV has a few common filename variants.  Do not silently interpret
+        # an arbitrary binary upload as CSV: that produces confusing parser
+        # errors and can make a valid upload look broken.
+        if ext not in ("csv", ""):
+            raise ValueError(
+                f"'{name}' is not a supported input format. "
+                "Supported formats: CSV, TSV, Excel, JSON, PDF, Word, text, and images."
+            )
+        try:
+            df = pd.read_csv(path_or_buffer)
+        except UnicodeDecodeError:
+            if hasattr(path_or_buffer, "seek"):
+                path_or_buffer.seek(0)
+            df = pd.read_csv(path_or_buffer, encoding="latin-1")
         df, detection_info = _route_structured_or_reviews(df, name)
 
     # Required columns check -- fail with a clear message rather than a
@@ -684,15 +724,30 @@ def run_pipeline_batch(file_items, n_clusters=None):
 
     frames = []
     detection_infos = []
+    skipped_files = []
 
     for filename, file_bytes in file_items:
-        df_i = load_data(BytesIO(file_bytes), filename=filename)
+        try:
+            df_i = load_data(BytesIO(file_bytes), filename=filename)
+        except ValueError as exc:
+            # One unrelated file should not prevent valid files in the same
+            # multi-select upload from being analyzed.
+            message = str(exc)
+            if "not a supported input format" in message:
+                skipped_files.append({"filename": filename, "reason": message})
+                continue
+            raise
         frames.append(df_i)
         detection_infos.append(
             df_i.attrs.get("detection_info", {"input_type": "structured"})
         )
 
     if not frames:
+        if skipped_files:
+            raise ValueError(
+                "None of the uploaded files could be analyzed. "
+                + " ".join(item["reason"] for item in skipped_files)
+            )
         raise ValueError("No files were uploaded.")
 
     # Combine BEFORE the expensive ML steps.
@@ -728,6 +783,9 @@ def run_pipeline_batch(file_items, n_clusters=None):
     if raw_info is not None:
         detection_info = dict(raw_info)
         detection_info["files_processed"] = len(frames)
+    if skipped_files:
+        detection_info = dict(detection_info)
+        detection_info["skipped_files"] = skipped_files
 
     df.attrs["detection_info"] = detection_info
     return df, cluster_labels, k_used, trend, detection_info

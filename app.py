@@ -540,31 +540,23 @@ def render_upload_page():
 
     uploaded_files = st.file_uploader(
         "📂 Upload your service notes files",
-        type=[
-            "csv",
-            "xlsx",
-            "xls",
-            "tsv",
-            "json",
-            "pdf",
-            "docx",
-            "png",
-            "jpg",
-            "jpeg",
-        ],
+        # Accept every extension at the browser level.  The pipeline parses
+        # the formats it understands and skips unrelated files without
+        # changing them.
+        type=None,
         accept_multiple_files=True,
         help=(
             "You can select multiple CSV, Excel, TSV, JSON, PDF, Word, "
-            "or image files. All files are combined into one dataset and "
-            "analyzed together for consistent failure themes."
+            "text, or image files. Unsupported files are left untouched and "
+            "skipped while valid files are analyzed together."
         ),
     )
 
     st.caption(
         "Supported input: ✓ Multiple structured Failure Mining datasets  "
         "✓ Multiple raw customer/review files (CSV/XLSX, e.g. Google "
-        "Reviews exports) ✓ PDF/Word/image files — all uploaded files "
-        "are analyzed together."
+        "Reviews exports) ✓ PDF/Word/text/image files — valid uploads are "
+        "analyzed together; unrecognized files are skipped."
     )
 
     auto_k = st.sidebar.checkbox(
@@ -582,7 +574,9 @@ def render_upload_page():
             8,
         )
 
-    if not uploaded_files:
+    # Streamlit returns None before the first selection and a list afterwards.
+    # The explicit check is more reliable across mobile browser reruns.
+    if uploaded_files is None or len(uploaded_files) == 0:
         st.info(
             "Please upload one or more files "
             "(CSV, Excel, PDF, Word, or image)."
@@ -643,6 +637,13 @@ def render_upload_page():
         st.session_state.source_name = source_name
         st.session_state.detection_info = detection_info
         st.session_state.analysis_done = True
+
+        skipped_files = detection_info.get("skipped_files", [])
+        if skipped_files:
+            st.warning(
+                "Skipped unsupported file(s): "
+                + ", ".join(item["filename"] for item in skipped_files)
+            )
 
         # Keep the existing report + history feature.
         top_theme = (
