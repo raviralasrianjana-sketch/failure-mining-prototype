@@ -44,6 +44,81 @@ from review_preprocessor import is_structured_failure_data, preprocess_raw_revie
 
 
 # ---------------------------------------------------------------------------
+# DEFAULT INVESTMENT DATASET
+# ---------------------------------------------------------------------------
+def build_default_investment_dataset() -> pd.DataFrame:
+    """Return a small, deterministic business-case dataset for the demo.
+
+    Each row is one model in one month.  ``investment`` is the initial
+    investment for that model, while ``damage_cost`` is the monthly cost of
+    returns, repairs, warranty claims, and other damage.  Keeping the inputs
+    visible makes the resulting ROI calculation easy to audit.
+    """
+    months = pd.date_range("2025-01-01", periods=12, freq="MS")
+    model_inputs = {
+        "Model-A100": {
+            "investment": 240000,
+            "price": 1200,
+            "buyers": [95, 110, 125, 140, 155, 170, 185, 205, 220, 235, 250, 270],
+            "damage": [18000, 17500, 17000, 16500, 16000, 15500, 15000, 14500, 14000, 13500, 13000, 12500],
+            "cause": "Warranty and repair costs",
+        },
+        "Model-B200": {
+            "investment": 360000,
+            "price": 400,
+            "buyers": [210, 205, 200, 195, 190, 185, 180, 175, 170, 165, 160, 155],
+            "damage": [42000, 43000, 44000, 45000, 46000, 47000, 48000, 49000, 50000, 51000, 52000, 53000],
+            "cause": "High returns and product damage",
+        },
+        "Model-C300": {
+            "investment": 500000,
+            "price": 2200,
+            "buyers": [120, 130, 145, 160, 180, 200, 220, 245, 270, 300, 330, 360],
+            "damage": [30000, 29000, 28000, 27000, 26000, 25000, 24000, 23000, 22000, 21000, 20000, 19000],
+            "cause": "Launch and distribution costs",
+        },
+    }
+    rows = []
+    for model, values in model_inputs.items():
+        for month, buyers, damage_cost in zip(
+            months, values["buyers"], values["damage"]
+        ):
+            rows.append({
+                "month": month,
+                "product_model": model,
+                "investment": values["investment"],
+                "buyers": buyers,
+                "price": values["price"],
+                "damage_cost": damage_cost,
+                "damage_cause": values["cause"],
+            })
+    return pd.DataFrame(rows)
+
+
+def build_investment_summary(df: pd.DataFrame) -> pd.DataFrame:
+    """Calculate revenue, profit/loss, and ROI for every product model."""
+    if df is None or df.empty:
+        return pd.DataFrame()
+    working = df.copy()
+    working["revenue"] = working["buyers"] * working["price"]
+    working["total_cost"] = working["damage_cost"]
+    summary = working.groupby("product_model", as_index=False).agg(
+        investment=("investment", "first"),
+        buyers=("buyers", "sum"),
+        revenue=("revenue", "sum"),
+        damage_cost=("damage_cost", "sum"),
+        damage_cause=("damage_cause", lambda values: values.value_counts().index[0]),
+    )
+    summary["total_cost"] = summary["investment"] + summary["damage_cost"]
+    summary["profit_loss"] = summary["revenue"] - summary["total_cost"]
+    summary["roi_pct"] = (summary["profit_loss"] / summary["investment"]) * 100
+    summary["decision"] = np.where(
+        summary["profit_loss"] >= 0, "Invest / continue", "Do not invest yet"
+    )
+    return summary
+
+
+# ---------------------------------------------------------------------------
 # 0. EXTRACT TEXT FROM UNSTRUCTURED FILES (PDF / Word / images)
 # ---------------------------------------------------------------------------
 # CSV/Excel/JSON already come as neat rows and columns. PDFs, Word docs, and

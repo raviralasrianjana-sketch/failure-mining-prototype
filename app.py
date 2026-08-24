@@ -8,7 +8,13 @@ import streamlit as st
 import auth
 import chatbot
 import pipeline as failure_pipeline
-from pipeline import run_pipeline_batch, build_insights, build_word_report
+from pipeline import (
+    run_pipeline_batch,
+    build_insights,
+    build_word_report,
+    build_default_investment_dataset,
+    build_investment_summary,
+)
 
 # Keep the app compatible with an older deployed pipeline.py while the
 # project files are being synced.  Without this guard, Streamlit fails during
@@ -86,6 +92,12 @@ SECTIONS = [
     {"key": "ai_assistant", "icon": "🤖", "label": "Failure Mining AI Assistant (Chat)"},
 ]
 SECTION_KEYS = {s["key"] for s in SECTIONS}
+
+BUSINESS_SECTIONS = [
+    {"key": "business_graph", "icon": "📈", "label": "Buyers Over Time by Product Model"},
+    {"key": "business_summary", "icon": "💰", "label": "Investment Profit / Loss Summary"},
+]
+BUSINESS_SECTION_KEYS = {s["key"] for s in BUSINESS_SECTIONS}
 
 
 def inject_global_theme():
@@ -331,6 +343,8 @@ def do_logout():
         "source_name",
         "detection_info",
         "chat_history",
+        "business_df",
+        "dataset_mode",
     ):
         st.session_state.pop(key, None)
     st.session_state.page = "auth"
@@ -538,6 +552,30 @@ def render_upload_page():
         "screenshot) and click Analyze to start the failure mode analysis."
     )
 
+    dataset_mode = st.radio(
+        "Choose your data source",
+        ["Upload my own files", "Use default investment dataset"],
+        horizontal=True,
+        key="dataset_mode_selector",
+        help="The default dataset is a ready-to-run investment decision example with buyers, prices, investment, and damage costs.",
+    )
+
+    if dataset_mode == "Use default investment dataset":
+        st.info(
+            "The default dataset includes monthly buyers, product price, "
+            "company investment, and damage costs for three product models."
+        )
+        if st.button("🚀 Load Default Dataset", type="primary"):
+            business_df = build_default_investment_dataset()
+            st.session_state.business_df = business_df
+            st.session_state.dataset_mode = "default_investment"
+            st.session_state.source_name = "Default investment dataset"
+            st.session_state.analysis_done = True
+            st.session_state.page = "business_hub"
+            st.rerun()
+        return
+
+    st.session_state.dataset_mode = "uploaded_failure_data"
     uploaded_files = st.file_uploader(
         "📂 Upload your service notes files",
         # Accept every extension at the browser level.  The pipeline parses
@@ -820,6 +858,121 @@ def render_hub():
     if st.button("⬅️ Analyze different files"):
         st.session_state.analysis_done = False
         go("upload")
+
+
+def render_business_hub():
+    """Navigation hub for the default product-investment decision dataset."""
+    df = st.session_state.business_df
+    st.title("💼 Product Investment Decision Support")
+    st.caption(
+        f"Source: {st.session_state.source_name} · {df['product_model'].nunique()} "
+        "models · 12 months of buyers and financial data."
+    )
+    st.info(
+        "Use the graph to inspect demand over time, then open the summary to "
+        "compare revenue, investment, damage costs, and ROI."
+    )
+    inject_icon_css()
+    for sec in BUSINESS_SECTIONS:
+        with st.container(border=True):
+            c1, c2 = st.columns([1, 6])
+            with c1:
+                st.markdown(
+                    f'<div class="icon-anim">{sec["icon"]}</div>',
+                    unsafe_allow_html=True,
+                )
+            with c2:
+                st.write("")
+                if st.button(
+                    sec["label"],
+                    key=f"business_nav_{sec['key']}",
+                    use_container_width=True,
+                ):
+                    go(sec["key"])
+    if st.button("⬅️ Choose a different dataset"):
+        st.session_state.analysis_done = False
+        go("upload")
+
+
+def _business_filtered_data():
+    df = st.session_state.business_df.copy()
+    models = sorted(df["product_model"].unique())
+    selected = st.sidebar.multiselect(
+        "Filter by product model",
+        models,
+        default=models,
+        key="business_model_filter",
+    )
+    return df[df["product_model"].isin(selected)], selected
+
+
+def render_business_graph():
+    df, _ = _business_filtered_data()
+    if st.button("⬅️ Back to Investment Hub"):
+        go("business_hub")
+    st.title("📈 Buyers Over Time by Product Model")
+    st.caption(
+        "Each line shows monthly buyer demand. A rising line indicates growing "
+        "market traction; a falling line is a warning to investigate before investing."
+    )
+    fig = px.line(
+        df,
+        x="month",
+        y="buyers",
+        color="product_model",
+        markers=True,
+        labels={"month": "Time", "buyers": "Number of buyers", "product_model": "Product model"},
+    )
+    fig.update_layout(height=520, legend=dict(orientation="h", y=-0.2))
+    st.plotly_chart(fig, use_container_width=True)
+    st.subheader("Dataset used for this graph")
+    st.dataframe(
+        df[["month", "product_model", "buyers", "price", "investment", "damage_cost"]],
+        use_container_width=True,
+        hide_index=True,
+    )
+
+
+def render_business_summary():
+    df, _ = _business_filtered_data()
+    if st.button("⬅️ Back to Investment Hub"):
+        go("business_hub")
+    st.title("💰 Investment Profit / Loss Summary")
+    st.caption(
+        "ROI is calculated as profit or loss divided by the initial company investment. "
+        "This is a planning estimate based on the default sample inputs."
+    )
+    summary = build_investment_summary(df)
+    if summary.empty:
+        st.warning("No product models match the current filter.")
+        return
+    for _, row in summary.iterrows():
+        amount = float(row["profit_loss"])
+        roi = float(row["roi_pct"])
+        with st.container(border=True):
+            status = "✅" if amount >= 0 else "⚠️"
+            st.subheader(f"{status} {row['product_model']} — {row['decision']}")
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Total buyers", f"{int(row['buyers']):,}")
+            c2.metric("Revenue", f"${row['revenue']:,.0f}")
+            c3.metric("Profit / loss", f"${amount:,.0f}")
+            c4.metric("ROI / loss rate", f"{roi:+.1f}%")
+            st.write(
+                f"**Investment:** ${row['investment']:,.0f} · "
+                f"**Damage costs:** ${row['damage_cost']:,.0f} · "
+                f"**Primary damage cause:** {row['damage_cause']}"
+            )
+            if amount < 0:
+                st.warning(
+                    f"Loss driver: {row['damage_cause']} combined with the "
+                    "model's buyer volume does not recover the initial investment "
+                    "and accumulated damage costs."
+                )
+            else:
+                st.success(
+                    "The model is profitable in this sample because accumulated "
+                    "sales revenue exceeds investment and damage costs."
+                )
 
 
 # ---------------------------------------------------------------------------
@@ -1494,6 +1647,14 @@ else:
 
     elif not st.session_state.analysis_done:
         render_upload_page()
+
+    elif st.session_state.get("dataset_mode") == "default_investment":
+        if page == "business_graph":
+            render_business_graph()
+        elif page == "business_summary":
+            render_business_summary()
+        else:
+            render_business_hub()
 
     elif page == "hub" or page not in SECTION_KEYS:
         render_hub()
